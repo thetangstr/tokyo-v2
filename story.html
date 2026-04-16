@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PFF — Our Story: From V1 to V17</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;700&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e14;--chrome:#141821;--chrome-2:#1a1e28;--chrome-border:#252a38;
+  --gold:#c49000;--gold-bright:#e6b030;
+  --live:#e53935;--blue:#60a0ff;--green:#4caf50;
+  --bright:#f0f2f5;--text:#b8bcc6;--muted:#5a6070;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 1.5rem;background:rgba(10,14,20,.85);backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-color .3s}
+nav.scrolled{border-bottom-color:var(--chrome-border)}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:52px}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;color:var(--bright);letter-spacing:-.02em;text-decoration:none}
+.logo span{color:var(--gold)}
+.nav-links{display:flex;gap:1.5rem;list-style:none;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.75rem;font-weight:500;letter-spacing:.03em;transition:color .2s}
+.nav-links a:hover,.nav-links a.current{color:var(--bright)}
+.nav-links a.current{color:var(--gold)}
+.back-link{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
+.back-link:hover{color:var(--gold)}
+.back-link::before{content:'\2190';margin-right:.4rem}
+
+/* HERO */
+.story-hero{padding:8rem 2rem 5rem;max-width:960px;margin:0 auto;text-align:left}
+.kicker{font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:1.25rem}
+.story-hero h1{font-family:'Sora',sans-serif;font-size:clamp(2.4rem,5.5vw,4.2rem);font-weight:800;letter-spacing:-.04em;line-height:1.04;color:var(--bright);margin-bottom:1.5rem}
+.story-hero h1 em{font-style:normal;color:var(--gold);font-weight:700}
+.story-hero-sub{font-size:1.1rem;color:var(--text);max-width:680px;line-height:1.7;margin-bottom:2.5rem}
+.story-hero-sub strong{color:var(--bright);font-weight:600}
+.story-meta{display:flex;gap:2.5rem;padding-top:1.75rem;border-top:1px solid var(--chrome-border);font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);flex-wrap:wrap}
+.story-meta strong{color:var(--bright);font-weight:700;display:block;font-size:.95rem;font-family:'Sora',sans-serif;letter-spacing:-.02em;margin-bottom:.15rem}
+
+/* TIMELINE STRIP */
+.timeline-strip{padding:2rem 2rem 3rem;background:var(--chrome);border-top:1px solid var(--chrome-border);border-bottom:1px solid var(--chrome-border)}
+.timeline-inner{max-width:1100px;margin:0 auto}
+.timeline-label{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:1.25rem;text-align:center}
+.timeline-track{position:relative;display:flex;justify-content:space-between;align-items:center;padding:0 .5rem;margin-bottom:1rem}
+.timeline-track::before{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:linear-gradient(to right,var(--chrome-border),var(--muted),var(--chrome-border));transform:translateY(-50%)}
+.t-node{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:.45rem}
+.t-dot{width:10px;height:10px;border-radius:50%;background:var(--chrome);border:2px solid var(--muted);transition:all .2s}
+.t-node.milestone .t-dot{width:14px;height:14px;background:var(--gold);border-color:var(--gold);box-shadow:0 0 10px rgba(196,144,0,.5)}
+.t-node.current .t-dot{background:var(--green);border-color:var(--green);box-shadow:0 0 12px rgba(76,175,80,.6);animation:pulsing 2s ease infinite}
+@keyframes pulsing{0%,100%{box-shadow:0 0 8px rgba(76,175,80,.4)}50%{box-shadow:0 0 16px rgba(76,175,80,.8)}}
+.t-label{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.t-node.milestone .t-label{color:var(--gold)}
+.t-node.current .t-label{color:var(--green)}
+.timeline-legend{display:flex;justify-content:center;gap:2rem;font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);flex-wrap:wrap}
+.tl-item{display:inline-flex;align-items:center;gap:.45rem}
+.tl-swatch{width:8px;height:8px;border-radius:50%}
+.tl-swatch.a{background:var(--muted)}
+.tl-swatch.b{background:var(--gold)}
+.tl-swatch.c{background:var(--green)}
+
+/* CHAPTER */
+.chapter{padding:5rem 2rem 2rem;max-width:860px;margin:0 auto;position:relative}
+.chapter-head{margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--chrome-border)}
+.chapter-marker{display:inline-flex;align-items:center;gap:.65rem;font-family:'JetBrains Mono',monospace;font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:.85rem}
+.chapter-marker .cm-num{padding:.2rem .55rem;background:rgba(196,144,0,.12);border:1px solid rgba(196,144,0,.3);border-radius:3px;color:var(--gold)}
+.chapter-marker .cm-year{color:var(--muted)}
+.chapter h2{font-family:'Sora',sans-serif;font-size:clamp(1.6rem,3vw,2.3rem);font-weight:700;color:var(--bright);letter-spacing:-.03em;line-height:1.15;margin-bottom:.85rem}
+.chapter h2 em{font-style:normal;color:var(--gold)}
+.chapter-lede{font-family:'Source Serif 4',serif;font-size:1.1rem;line-height:1.7;color:var(--text);max-width:680px}
+.chapter-lede strong{color:var(--bright);font-weight:600}
+
+.chapter-body{display:flex;flex-direction:column;gap:1.5rem;margin-top:1.5rem}
+.chapter-body p{font-size:.95rem;line-height:1.75;color:var(--text)}
+.chapter-body p strong{color:var(--bright);font-weight:600}
+
+/* VERSION CARD */
+.v-card{background:var(--chrome);border:1px solid var(--chrome-border);border-left:3px solid var(--gold);border-radius:5px;padding:1.5rem 1.75rem;display:grid;grid-template-columns:80px 1fr;gap:1.5rem;align-items:start}
+.v-card.live{border-left-color:var(--green)}
+.v-card.milestone{border-left-color:var(--gold-bright);background:linear-gradient(135deg,var(--chrome) 0%,rgba(196,144,0,.04) 100%)}
+.v-badge{font-family:'Sora',sans-serif;font-size:1.45rem;font-weight:800;color:var(--gold);letter-spacing:-.03em;line-height:1;padding-top:.2rem}
+.v-badge .v-sub{display:block;font-family:'JetBrains Mono',monospace;font-size:.58rem;font-weight:500;color:var(--muted);letter-spacing:.1em;margin-top:.4rem;text-transform:uppercase}
+.v-card.milestone .v-badge{color:var(--gold-bright)}
+.v-card.live .v-badge{color:var(--green)}
+.v-body h3{font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:700;color:var(--bright);margin-bottom:.4rem;letter-spacing:-.01em}
+.v-body p{font-size:.88rem;color:var(--text);line-height:1.65}
+.v-body p+p{margin-top:.5rem}
+.v-body p strong{color:var(--bright);font-weight:600}
+.v-tags{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.75rem}
+.v-tag{font-family:'JetBrains Mono',monospace;font-size:.58rem;font-weight:600;letter-spacing:.06em;padding:.22rem .55rem;border-radius:3px;text-transform:uppercase}
+.v-tag.insight{background:rgba(96,160,255,.12);color:var(--blue)}
+.v-tag.breakthrough{background:rgba(196,144,0,.12);color:var(--gold)}
+.v-tag.lesson{background:rgba(229,57,53,.12);color:var(--live)}
+.v-tag.shipped{background:rgba(76,175,80,.12);color:var(--green)}
+
+/* PULL QUOTE / DIAGRAM */
+.pull-quote{margin:2rem 0;padding:1.5rem 1.75rem;background:var(--chrome-2);border-left:3px solid var(--gold);font-family:'Source Serif 4',serif;font-style:italic;font-size:1rem;line-height:1.6;color:var(--text)}
+.pull-quote::before{content:'\201C';font-family:'Sora',sans-serif;font-style:normal;font-weight:700;font-size:2rem;color:var(--gold);line-height:0;display:inline-block;margin-right:.35rem;vertical-align:-.35em}
+.pull-quote strong{color:var(--bright);font-weight:600;font-style:normal}
+.pq-attr{display:block;margin-top:.75rem;font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.08em;font-style:normal;text-transform:uppercase}
+
+/* DIAGRAM BOXES */
+.diagram{margin:2rem 0;padding:1.75rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px}
+.diagram-title{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:1.25rem}
+
+/* 5-Layer stack */
+.layer-stack{display:flex;flex-direction:column;gap:.5rem}
+.layer{display:grid;grid-template-columns:130px 1fr auto;gap:1.25rem;padding:.75rem 1rem;background:var(--bg);border:1px solid var(--chrome-border);border-left:3px solid var(--gold);border-radius:3px;align-items:center}
+.layer .l-tag{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.layer .l-desc{font-size:.82rem;color:var(--text);line-height:1.55}
+.layer .l-count{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted)}
+.layer.l1{border-left-color:#4caf50}.layer.l1 .l-tag{color:#4caf50}
+.layer.l2{border-left-color:#60a0ff}.layer.l2 .l-tag{color:#60a0ff}
+.layer.l3{border-left-color:#c49000}.layer.l3 .l-tag{color:#c49000}
+.layer.l4{border-left-color:#e6b030}.layer.l4 .l-tag{color:#e6b030}
+.layer.l5{border-left-color:#e05050}.layer.l5 .l-tag{color:#e05050}
+
+/* T13RL Diagram */
+.t13rl-loop{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;align-items:stretch}
+.t13rl-reward{background:var(--bg);border:1px solid var(--chrome-border);border-radius:4px;padding:1rem;border-top:2px solid var(--gold);text-align:center}
+.t13rl-reward.r1{border-top-color:var(--green)}
+.t13rl-reward.r2{border-top-color:var(--blue)}
+.t13rl-reward.r3{border-top-color:var(--gold)}
+.t13rl-reward .t-name{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:.08em;color:var(--bright);margin-bottom:.35rem;text-transform:uppercase}
+.t13rl-reward .t-desc{font-size:.72rem;color:var(--text);line-height:1.5}
+.t13rl-loop-caption{text-align:center;margin-top:1rem;font-family:'Source Serif 4',serif;font-style:italic;color:var(--muted);font-size:.85rem}
+
+/* Metric bar */
+.metric-row{display:grid;grid-template-columns:160px 1fr 60px;gap:.85rem;align-items:center;padding:.5rem 0}
+.metric-row+.metric-row{border-top:1px dashed var(--chrome-border)}
+.metric-label{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text);font-weight:600}
+.metric-track{height:8px;background:var(--bg);border-radius:4px;position:relative;overflow:hidden}
+.metric-fill{position:absolute;left:0;top:0;bottom:0;background:var(--gold);border-radius:4px;transition:width 1.2s ease}
+.metric-fill.good{background:var(--green)}
+.metric-fill.bad{background:var(--live)}
+.metric-mark{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--bright)}
+.metric-value{font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700;color:var(--bright);text-align:right;letter-spacing:-.02em}
+
+/* CLOSING */
+.story-close{padding:5rem 2rem 6rem;max-width:760px;margin:0 auto;text-align:center}
+.story-close h2{font-family:'Sora',sans-serif;font-size:clamp(1.6rem,3vw,2.1rem);font-weight:700;color:var(--bright);letter-spacing:-.03em;margin-bottom:1rem}
+.story-close p{font-size:1rem;color:var(--text);max-width:560px;margin:0 auto 2rem;line-height:1.7}
+.story-close a.cta{display:inline-flex;align-items:center;gap:.5rem;font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700;color:var(--bg);background:var(--gold);border:none;padding:.85rem 1.8rem;border-radius:3px;text-decoration:none;letter-spacing:.04em;text-transform:uppercase;transition:filter .2s}
+.story-close a.cta:hover{filter:brightness(1.15)}
+.story-close a.cta::after{content:'\2192';transition:transform .2s}
+.story-close a.cta:hover::after{transform:translateX(3px)}
+
+/* Footer */
+footer{text-align:center;padding:3rem 2rem;border-top:1px solid var(--chrome-border)}
+footer .ft{font-family:'Source Serif 4',serif;font-size:.9rem;color:var(--text);margin-bottom:.3rem}
+footer p{font-size:.72rem;color:var(--muted)}
+
+/* Reveal on scroll */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* Tokenized code block utility */
+.token-block{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--muted);padding:.85rem 1rem;background:var(--bg);border-radius:3px;border-left:2px solid var(--gold);margin:.75rem 0;overflow-x:auto;word-break:normal;line-height:1.7;-webkit-overflow-scrolling:touch}
+.token-block::-webkit-scrollbar{height:3px}
+.token-block::-webkit-scrollbar-thumb{background:var(--chrome-border);border-radius:2px}
+
+/* RESPONSIVE */
+@media(max-width:1024px){
+  .story-hero{padding:7rem 1.5rem 4rem}
+}
+@media(max-width:768px){
+  .story-hero{padding:5.5rem 1.25rem 3rem}
+  .story-hero h1{font-size:clamp(2rem,7.5vw,3rem)}
+  .story-hero-sub{font-size:1rem}
+  .chapter{padding:3rem 1.25rem 1.5rem}
+  .chapter h2{font-size:clamp(1.4rem,5.2vw,2rem)}
+  .chapter-lede{font-size:1rem}
+  .v-card{grid-template-columns:1fr;gap:.85rem;padding:1.25rem 1.35rem}
+  .v-badge{padding-top:0;font-size:1.3rem}
+  .v-badge .v-sub{margin-top:.25rem}
+  .v-body h3{font-size:1rem}
+  .v-body p{font-size:.85rem}
+  .layer{grid-template-columns:1fr;gap:.35rem;padding:.7rem .9rem}
+  .layer .l-count{text-align:left;font-size:.62rem}
+  .t13rl-loop{grid-template-columns:1fr}
+  .t13rl-reward{padding:.85rem}
+  .metric-row{grid-template-columns:1fr auto;gap:.4rem;padding:.55rem 0}
+  .metric-row .metric-track{grid-column:1/-1;order:3;margin-top:.3rem}
+  .metric-label{font-size:.68rem}
+  .metric-value{font-size:.82rem}
+  .timeline-strip{padding:1.75rem 1rem 2.25rem;position:relative}
+  .timeline-inner{position:relative}
+  .timeline-track{overflow-x:auto;overflow-y:visible;justify-content:flex-start;gap:1.15rem;padding:0 1rem .3rem;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .timeline-track::-webkit-scrollbar{display:none}
+  .timeline-track::before{right:auto;left:1rem;width:calc(16*(10px + 1.15rem))}
+  .timeline-strip::after{content:'';position:absolute;top:0;right:0;bottom:0;width:40px;pointer-events:none;background:linear-gradient(to right,transparent,var(--chrome));z-index:2}
+  .t-label{font-size:.56rem}
+  nav{padding:0 1rem}
+  nav .nav-inner{height:48px}
+  nav .nav-links{gap:.75rem;flex-wrap:wrap;justify-content:flex-end}
+  nav .nav-links a{font-size:.62rem;letter-spacing:.02em}
+  .story-meta{gap:1.25rem;font-size:.68rem}
+  .story-meta strong{font-size:.9rem}
+  .pull-quote{padding:1.1rem 1.25rem;font-size:.92rem;margin:1.5rem 0}
+  .pull-quote::before{font-size:1.6rem}
+  .diagram{padding:1.25rem 1.1rem;margin:1.5rem 0}
+  .diagram-title{font-size:.58rem;margin-bottom:1rem}
+  .story-close{padding:4rem 1.25rem 5rem}
+  .story-close h2{font-size:clamp(1.35rem,5vw,1.8rem)}
+  .story-close p{font-size:.95rem}
+  .token-block{font-size:.7rem}
+}
+@media(max-width:480px){
+  nav .nav-links li:nth-child(3),nav .nav-links li:nth-child(4){display:none}
+  nav .logo{font-size:.9rem}
+  .story-hero{padding:4.5rem 1rem 2.5rem}
+  .story-hero h1{font-size:2rem;line-height:1.1;margin-bottom:1.25rem}
+  .story-hero-sub{font-size:.92rem;margin-bottom:2rem}
+  .kicker{font-size:.6rem;letter-spacing:.22em;margin-bottom:1rem}
+  .story-meta{flex-direction:column;gap:.85rem;padding-top:1.25rem;font-size:.65rem}
+  .story-meta strong{font-size:.88rem;margin-bottom:0}
+  .chapter{padding:2.25rem 1rem 1rem}
+  .chapter-head{margin-bottom:1.5rem;padding-bottom:1rem}
+  .chapter-marker{font-size:.58rem;flex-wrap:wrap;gap:.4rem;margin-bottom:.7rem}
+  .chapter-marker .cm-num{padding:.16rem .45rem}
+  .chapter h2{font-size:1.45rem;line-height:1.2}
+  .chapter-lede{font-size:.95rem}
+  .chapter-body{gap:1.1rem;margin-top:1.1rem}
+  .chapter-body p{font-size:.88rem}
+  .v-card{padding:1.05rem 1.1rem;gap:.65rem}
+  .v-badge{font-size:1.15rem}
+  .v-badge .v-sub{font-size:.55rem}
+  .v-body h3{font-size:.95rem;margin-bottom:.3rem}
+  .v-body p{font-size:.83rem;line-height:1.6}
+  .v-tags{gap:.3rem;margin-top:.6rem}
+  .v-tag{font-size:.54rem;padding:.18rem .45rem}
+  .pull-quote{padding:.9rem 1.05rem;font-size:.86rem;margin:1.25rem 0;line-height:1.55}
+  .pull-quote::before{font-size:1.4rem}
+  .pq-attr{font-size:.58rem}
+  .diagram{padding:.95rem .85rem;margin:1.25rem 0}
+  .diagram-title{font-size:.56rem;letter-spacing:.14em}
+  .layer{padding:.6rem .7rem}
+  .layer .l-tag{font-size:.6rem}
+  .layer .l-desc{font-size:.78rem}
+  .t13rl-reward{padding:.75rem}
+  .t13rl-reward .t-desc{font-size:.68rem}
+  .metric-label{font-size:.62rem}
+  .metric-value{font-size:.78rem}
+  .story-close{padding:3.5rem 1rem 4.5rem}
+  .story-close h2{font-size:1.4rem}
+  .story-close p{font-size:.92rem;margin-bottom:1.5rem}
+  .story-close a.cta{font-size:.75rem;padding:.75rem 1.4rem}
+  .token-block{font-size:.62rem;padding:.7rem .8rem}
+  .timeline-track{gap:1rem;padding:0 1rem .25rem}
+  .timeline-track::before{width:calc(16*(10px + 1rem))}
+  .timeline-label{font-size:.56rem;margin-bottom:1rem}
+  .timeline-legend{gap:1.25rem;font-size:.58rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  .t-node.current .t-dot{animation:none}
+}
+</style>
+</head>
+<body>
+
+<nav><div class="nav-inner">
+  <a class="logo" href="index.html">PF<span>F</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html#overview">Approach</a></li>
+    <li><a href="index.html#demo">Demo</a></li>
+    <li><a class="current" href="story.html">Our Story</a></li>
+    <li><a href="index.html#ask">The Ask</a></li>
+  </ul>
+</div></nav>
+
+<!-- ========== STORY HERO ========== -->
+<section class="story-hero">
+  <div class="kicker">Our Story</div>
+  <h1>From <em>V1 to V17</em>.<br>Seventeen builds. One engine.</h1>
+  <p class="story-hero-sub">
+    We didn't ship a model. We shipped seventeen of them. Each one broke on something real. The ones that survived made the rules that govern V17. This is what we learned &mdash; and why <strong>you can't get here in a weekend.</strong>
+  </p>
+  <div class="story-meta">
+    <div><strong>17</strong>Major versions</div>
+    <div><strong>2023 &rarr; 2026</strong>Build timeline</div>
+    <div><strong>43,564</strong>Player-games trained</div>
+    <div><strong>115</strong>Process calculators</div>
+    <div><strong>&lt;10%</strong>Golden Metric target</div>
+  </div>
+</section>
+
+<!-- ========== TIMELINE STRIP ========== -->
+<section class="timeline-strip">
+  <div class="timeline-inner">
+    <div class="timeline-label">The Path &middot; 17 Versions</div>
+    <div class="timeline-track">
+      <div class="t-node"><div class="t-dot"></div><div class="t-label">V1</div></div>
+      <div class="t-node"><div class="t-dot"></div><div class="t-label">V2</div></div>
+      <div class="t-node"><div class="t-dot"></div><div class="t-label">V3</div></div>
+      <div class="t-node"><div class="t-dot"></div><div class="t-label">V4</div></div>
+      <div class="t-node milestone"><div class="t-dot"></div><div class="t-label">V5</div></div>
+      <div class="t-node"><div class="t-dot"></div><div class="t-label">V6</div></div>
+      <div class="t-node"><div class="t-dot"></div><div class="t-label">V7</div></div>
+      <div class="t-node"><div class="t-dot"></div><div class="t-label">V8</div></div>
+      <div class="t-node"><div class="t-dot"></div><div class="t-label">V9</div></div>
+      <div class="t-node milestone"><div class="t-dot"></div><div class="t-label">V10</div></div>
+      <div class="t-node"><div class="t-dot"></div><div class="t-label">V11</div></div>
+      <div class="t-node"><div class="t-dot"></div><div class="t-label">V12</div></div>
+      <div class="t-node milestone"><div class="t-dot"></div><div class="t-label">V13</div></div>
+      <div class="t-node milestone"><div class="t-dot"></div><div class="t-label">V14</div></div>
+      <div class="t-node"><div class="t-dot"></div><div class="t-label">V15</div></div>
+      <div class="t-node"><div class="t-dot"></div><div class="t-label">V16</div></div>
+      <div class="t-node current"><div class="t-dot"></div><div class="t-label">V17</div></div>
+    </div>
+    <div class="timeline-legend">
+      <span class="tl-item"><span class="tl-swatch a"></span>Iteration</span>
+      <span class="tl-item"><span class="tl-swatch b"></span>Inflection point</span>
+      <span class="tl-item"><span class="tl-swatch c"></span>Current build</span>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CHAPTER 1: THE GOAL ========== -->
+<section class="chapter reveal">
+  <div class="chapter-head">
+    <div class="chapter-marker"><span class="cm-num">Ch. 01</span><span>The Goal</span><span class="cm-year">2023</span></div>
+    <h2>Build the most accurate fantasy football engine &mdash; with <em>no humans in the loop.</em></h2>
+    <p class="chapter-lede">
+      Every existing projection system leaned on a person. An analyst tweaked a number. An editor overrode a call. We wanted a machine that could run the whole season without anyone touching it &mdash; and still beat the humans who used to touch it.
+    </p>
+  </div>
+
+  <div class="chapter-body">
+    <div class="v-card">
+      <div class="v-badge">V1<span class="v-sub">Analyze the analysts</span></div>
+      <div class="v-body">
+        <h3>Reverse-engineer the pros</h3>
+        <p>We spent the first month breaking down how top analysts actually built projections. Spreadsheets. Gut calls. Hand-weighted last-4-game averages. We listed everything they did and asked: <strong>which of these could a machine do better, and which would a machine miss?</strong></p>
+        <p>Two answers emerged, and they became our <strong>Big Rocks</strong>.</p>
+        <div class="v-tags"><span class="v-tag insight">First principles</span></div>
+      </div>
+    </div>
+
+    <div class="v-card">
+      <div class="v-badge">V2<span class="v-sub">The Big Rocks</span></div>
+      <div class="v-body">
+        <h3>End-to-end simulation &middot; Sequential snap prediction</h3>
+        <p><strong>Big Rock #1 &mdash; End-to-end game simulation.</strong> Humans can't re-run a game 1,000 times. Machines can. A real projection isn't a number; it's a distribution over a thousand alternate realities.</p>
+        <p><strong>Big Rock #2 &mdash; Sequential snap prediction.</strong> Stats are outcomes of plays, and plays depend on everything that happened before them. Game script drives volume. Volume drives stats. Sequence matters.</p>
+        <p>Everything we built after this pointed back at these two rocks.</p>
+        <div class="v-tags"><span class="v-tag breakthrough">Big Rocks identified</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CHAPTER 2: FIRST PRINCIPLES ========== -->
+<section class="chapter reveal">
+  <div class="chapter-head">
+    <div class="chapter-marker"><span class="cm-num">Ch. 02</span><span>First Principles</span><span class="cm-year">Early 2024</span></div>
+    <h2>EPA as north star. The <em>Time Machine Rule.</em></h2>
+    <p class="chapter-lede">
+      Before we could predict anything, we had to decide what "good" meant. And we had to invent a rule that would save us from the single most common failure mode in sports ML.
+    </p>
+  </div>
+
+  <div class="chapter-body">
+    <div class="v-card">
+      <div class="v-badge">V3<span class="v-sub">EPA everywhere</span></div>
+      <div class="v-body">
+        <h3>Expected Points Added becomes the unit of measurement</h3>
+        <p>Yards lie. Touchdowns are lumpy. <strong>EPA</strong> &mdash; the change in expected points a play produces &mdash; stayed honest. We refactored every feature around it. Efficiency over volume. Quality over surface stats.</p>
+        <div class="v-tags"><span class="v-tag insight">North star metric</span></div>
+      </div>
+    </div>
+
+    <div class="v-card milestone">
+      <div class="v-badge">V4<span class="v-sub">Time Machine Rule</span></div>
+      <div class="v-body">
+        <h3>Never use data the model couldn't have had</h3>
+        <p>Our first backtests looked incredible. 8% error. We almost celebrated. Then we found it: one feature was looking at end-of-game snap counts to predict that same game's yards. A perfect score and a perfectly worthless model.</p>
+        <p>We codified the <strong>Time Machine Rule</strong>: every feature must be re-creatable from only the information that existed <em>before</em> kickoff. No look-ahead. No leakage. No exceptions. Every calculator has to prove it.</p>
+        <div class="v-tags"><span class="v-tag lesson">Hard-earned rule</span><span class="v-tag shipped">Constitutional</span></div>
+      </div>
+    </div>
+
+    <div class="pull-quote">
+      The first backtest that looks too good is always a leak. <strong>The second is usually a leak too.</strong> If the number makes you happy, audit the feature that most wants to explain it.
+      <span class="pq-attr">&mdash; Internal lesson, V4 postmortem</span>
+    </div>
+
+    <div class="v-card">
+      <div class="v-badge">V5<span class="v-sub">Monolith ships</span></div>
+      <div class="v-body">
+        <h3>One model, all positions, four stats. It worked &mdash; barely.</h3>
+        <p>V5 was our first real end-to-end model. One XGBoost regressor, sixty-ish features, every position. It beat the industry on QB yards and lost to the mean on TE yards. It was the first thing we could point at and say: "that's a projection system."</p>
+        <p>It was also the last monolith we ever shipped.</p>
+        <div class="v-tags"><span class="v-tag shipped">First production model</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CHAPTER 3: LAYERED THINKING ========== -->
+<section class="chapter reveal">
+  <div class="chapter-head">
+    <div class="chapter-marker"><span class="cm-num">Ch. 03</span><span>Layered Thinking</span><span class="cm-year">Mid 2024</span></div>
+    <h2>The monolith cracked. A <em>5-layer architecture</em> took its place.</h2>
+    <p class="chapter-lede">
+      V5 worked for QBs because QBs are largely about volume and scheme. It broke for running backs because rushing depends on what the defense is doing. One model couldn't carry that load. We split it.
+    </p>
+  </div>
+
+  <div class="chapter-body">
+    <div class="v-card milestone">
+      <div class="v-badge">V6&ndash;V10<span class="v-sub">5-layer architecture</span></div>
+      <div class="v-body">
+        <h3>Features organized by what they describe, not when they were added</h3>
+        <p>We stopped piling features into a flat list. Instead: five layers, each answering a different question. A feature can only belong to one layer. Every layer has a review gate.</p>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <div class="diagram-title">The 5-Layer Feature Architecture</div>
+      <div class="layer-stack">
+        <div class="layer l1"><div class="l-tag">L1 &middot; Context</div><div class="l-desc">Game script, weather, rest days, travel, short-week penalty. The situational scaffolding every play inherits.</div><div class="l-count">12 features</div></div>
+        <div class="layer l2"><div class="l-tag">L2 &middot; Vegas</div><div class="l-desc">Implied totals, spreads, line movement. A market consensus we use as prior &mdash; then we try to beat it.</div><div class="l-count">14 features</div></div>
+        <div class="layer l3"><div class="l-tag">L3 &middot; Team Process</div><div class="l-desc">EPA per dropback, success rate, neutral pace, pass-over-expected. How the team actually generates value.</div><div class="l-count">28 features</div></div>
+        <div class="layer l4"><div class="l-tag">L4 &middot; Tracking</div><div class="l-desc">Air yards, separation, pressure rate, time-to-throw. What the on-field chips actually recorded.</div><div class="l-count">29 features</div></div>
+        <div class="layer l5"><div class="l-tag">L5 &middot; Player Process</div><div class="l-desc">Route participation, YPRR, TPRR, pressure evasion. Usage-normalized signal.</div><div class="l-count">32 features</div></div>
+      </div>
+    </div>
+
+    <p>Total: <strong>115 process calculators</strong> by the time V10 shipped. Every one traceable to a layer. Every one Time-Machine-Rule-verified. Every one reviewed by a human and a constitutional checker before it landed.</p>
+  </div>
+</section>
+
+<!-- ========== CHAPTER 4: ML AWAKENING ========== -->
+<section class="chapter reveal">
+  <div class="chapter-head">
+    <div class="chapter-marker"><span class="cm-num">Ch. 04</span><span>The ML Awakening</span><span class="cm-year">Late 2024</span></div>
+    <h2>Transformers. Reinforcement learning. The <em>T13RL</em> loop.</h2>
+    <p class="chapter-lede">
+      Tabular models hit a ceiling. Adding feature 116 didn't help the way adding feature 16 had. We needed architectures that could learn sequence and strategy, not just correlations.
+    </p>
+  </div>
+
+  <div class="chapter-body">
+    <div class="v-card">
+      <div class="v-badge">V11<span class="v-sub">The Constitutional Rule</span></div>
+      <div class="v-body">
+        <h3>No feature can be a historical average of the stat being predicted</h3>
+        <p>We found eight calculators quietly regressing to last season's averages. We banned the entire pattern. Backtest accuracy dropped 3%. Forward prediction improved 5% within two weeks. The best rule we ever wrote is the one that makes the tests look worse.</p>
+        <div class="v-tags"><span class="v-tag lesson">Discipline = moat</span><span class="v-tag shipped">Still enforced today</span></div>
+      </div>
+    </div>
+
+    <div class="v-card">
+      <div class="v-badge">V12<span class="v-sub">Transformer exploration</span></div>
+      <div class="v-body">
+        <h3>Sequence models enter the chat</h3>
+        <p>We tokenized drives. Each snap became a token. The model saw <code>[SNAP][DOWN_2][DIST_7][SHOTGUN][PASS][12_YDS]</code> instead of a row in a table. Attention learned which earlier snaps mattered for predicting the next one. Not production-ready yet, but the signal was undeniable.</p>
+        <div class="v-tags"><span class="v-tag insight">Sequence &gt; table</span></div>
+      </div>
+    </div>
+
+    <div class="v-card milestone">
+      <div class="v-badge">V13<span class="v-sub">T13RL system</span></div>
+      <div class="v-body">
+        <h3>Triple-reward reinforcement learning</h3>
+        <p>V13 was the first version to <em>decide</em> rather than just predict. The T13RL system fine-tunes the model against three rewards simultaneously: accuracy on realized outcomes, calibration of its own confidence, and agreement with Vegas market movement. The model has to get all three right.</p>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <div class="diagram-title">T13RL &middot; Triple-Reward Loop</div>
+      <div class="t13rl-loop">
+        <div class="t13rl-reward r1">
+          <div class="t-name">Reward 1 &middot; Accuracy</div>
+          <div class="t-desc">Was the prediction close to the actual outcome? Penalize error, reward closeness.</div>
+        </div>
+        <div class="t13rl-reward r2">
+          <div class="t-name">Reward 2 &middot; Calibration</div>
+          <div class="t-desc">Did the model's confidence match reality? 80% predictions must hit 80% of the time.</div>
+        </div>
+        <div class="t13rl-reward r3">
+          <div class="t-name">Reward 3 &middot; Market</div>
+          <div class="t-desc">Did our prediction agree with Vegas line movement? Divergence = sharp edge or bad signal.</div>
+        </div>
+      </div>
+      <div class="t13rl-loop-caption">The model has to satisfy all three &mdash; not average them, not pick one.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CHAPTER 5: THE RECKONING ========== -->
+<section class="chapter reveal">
+  <div class="chapter-head">
+    <div class="chapter-marker"><span class="cm-num">Ch. 05</span><span>The Reckoning</span><span class="cm-year">Nov 2025</span></div>
+    <h2>V14 shipped. Then we audited it. Then we <em>rewrote the project.</em></h2>
+    <p class="chapter-lede">
+      V14 was supposed to be the win. 115 features. MAE training. Walk-forward validation. Dashboards. And then we ran a clean holdout and everything fell apart.
+    </p>
+  </div>
+
+  <div class="chapter-body">
+    <div class="v-card milestone">
+      <div class="v-badge">V14<span class="v-sub">The audit that saved us</span></div>
+      <div class="v-body">
+        <h3>0-for-4 on Golden Metrics. The features added 1.1pp over the mean.</h3>
+        <p>In November 2025 we ran a proper 2024 holdout &mdash; weeks 9 through 18 &mdash; with zero training overlap. The results ended an 18-month winning streak of optimistic dashboards:</p>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <div class="diagram-title">V14 &middot; Quarantined 2024 Holdout (Nov 2025 audit)</div>
+      <div class="metric-row"><span class="metric-label">QB Pass Yds</span><div class="metric-track"><div class="metric-fill bad" style="width:72%"></div><div class="metric-mark" style="left:50%"></div></div><span class="metric-value">25.9%</span></div>
+      <div class="metric-row"><span class="metric-label">RB Rush Yds</span><div class="metric-track"><div class="metric-fill bad" style="width:95%"></div><div class="metric-mark" style="left:56%"></div></div><span class="metric-value">42.8%</span></div>
+      <div class="metric-row"><span class="metric-label">WR Rec Yds</span><div class="metric-track"><div class="metric-fill bad" style="width:82%"></div><div class="metric-mark" style="left:55%"></div></div><span class="metric-value">33.0%</span></div>
+      <div class="metric-row"><span class="metric-label">TE Rec Yds</span><div class="metric-track"><div class="metric-fill bad" style="width:100%"></div><div class="metric-mark" style="left:48%"></div></div><span class="metric-value">49.7%</span></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);margin-top:1rem;padding-top:.75rem;border-top:1px dashed var(--chrome-border);letter-spacing:.04em">
+        White mark = Golden Metric target. Every position missed. The full feature set beat predicting the mean by <strong style="color:var(--bright)">1.1 percentage points</strong>.
+      </div>
+    </div>
+
+    <div class="pull-quote">
+      Every success claim we'd made for six months was an evaluation artifact. The model wasn't predicting stats &mdash; it was memorizing them. <strong>We shipped twenty versions built on a mismeasured baseline.</strong> V14 is where we stopped lying to ourselves.
+      <span class="pq-attr">&mdash; V14 postmortem, internal</span>
+    </div>
+
+    <p><strong>What V14 taught us, that V1 through V13 couldn't:</strong> NFL stats have ~28% coefficient of variation game-to-game. A single number &mdash; however well-engineered &mdash; will always lose to a distribution. The answer wasn't "better features." The answer was "stop predicting single numbers."</p>
+  </div>
+</section>
+
+<!-- ========== CHAPTER 6: SEQUENCE MODEL ========== -->
+<section class="chapter reveal">
+  <div class="chapter-head">
+    <div class="chapter-marker"><span class="cm-num">Ch. 06</span><span>Sequence &amp; Context</span><span class="cm-year">Mid 2025</span></div>
+    <h2>Gridiron-X. A <em>context-augmented</em> transformer.</h2>
+    <p class="chapter-lede">
+      V15 was the first full rewrite. We kept the 115 features as inputs, but the prediction head was a transformer that read tokenized sequences &mdash; player context, Vegas context, play sequence, prediction targets &mdash; and attended to what mattered.
+    </p>
+  </div>
+
+  <div class="chapter-body">
+    <div class="v-card">
+      <div class="v-badge">V15<span class="v-sub">Gridiron-X</span></div>
+      <div class="v-body">
+        <h3>Tokenize everything. Let attention decide what matters.</h3>
+        <p>Every pre-game state became a sequence:</p>
+        <p class="token-block">
+          &lt;GAME_START&gt; &lt;WEEK_7&gt; &lt;HOME_KC&gt; &lt;AWAY_SF&gt;<br>
+          &lt;SPREAD_TOSS&gt; &lt;TOTAL_HIGH&gt; &lt;IMPLIED_HIGH_KC&gt;<br>
+          &lt;ROSTER&gt; &lt;Mahomes&gt; &lt;QB&gt; &lt;EPA_ELITE&gt; &lt;CPOE_ELITE&gt; &lt;HEALTHY&gt;<br>
+          &lt;Kelce&gt; &lt;TE&gt; &lt;WOPR_ELITE&gt; &lt;TARGET_HIGH&gt; &lt;QUESTIONABLE&gt; ...<br>
+          &lt;PREDICT&gt; &lt;Mahomes&gt; &rarr; [regression head]
+        </p>
+        <p>The transformer didn't need us to tell it what features mattered. Attention figured it out. And because the inputs were tokens, we could keep adding context &mdash; weather, matchup history, travel &mdash; without re-engineering the feature table.</p>
+        <div class="v-tags"><span class="v-tag breakthrough">Context tokenization</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CHAPTER 7: SIMULATE ========== -->
+<section class="chapter reveal">
+  <div class="chapter-head">
+    <div class="chapter-marker"><span class="cm-num">Ch. 07</span><span>Simulate the Game</span><span class="cm-year">Late 2025</span></div>
+    <h2>V16: stop predicting a number. <em>Simulate the game 1,000 times.</em></h2>
+    <p class="chapter-lede">
+      V14's lesson ("single numbers lose") and V15's architecture ("sequences work") met in V16. Instead of predicting Mahomes's yards, we simulated Mahomes's game &mdash; every snap, every choice &mdash; a thousand times. Then we read the distribution.
+    </p>
+  </div>
+
+  <div class="chapter-body">
+    <div class="v-card">
+      <div class="v-badge">V16<span class="v-sub">Distributions, not numbers</span></div>
+      <div class="v-body">
+        <h3>Multi-agent coordinator simulation</h3>
+        <p>Three agents started calling plays at each other: an offensive coordinator persona, a defensive coordinator persona, and a statistical resolver that computed the outcome of each snap from a distribution calibrated on 300K real plays. Mahomes stopped being a number. He became a probability shape &mdash; thin on the low end, fat around the median, long on the upside.</p>
+        <div class="v-tags"><span class="v-tag breakthrough">Multi-agent sim</span></div>
+      </div>
+    </div>
+
+    <div class="v-card">
+      <div class="v-badge">V16.5<span class="v-sub">AutoResearch comes online</span></div>
+      <div class="v-body">
+        <h3>40 autonomous experiments per night</h3>
+        <p>We gave the system a frozen evaluation oracle, a constitutional checker, and the keys to the feature codebase. Every night it ran forty experiments against itself &mdash; new feature combinations, new model architectures, new loss functions. Improvements got kept. Regressions got reverted.</p>
+        <p>The Poisson breakthrough that halved our TD error? Experiment 23 at 2 AM. No human saw it until the morning.</p>
+        <div class="v-tags"><span class="v-tag shipped">Flywheel</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CHAPTER 8: V17 SYNTHESIS ========== -->
+<section class="chapter reveal">
+  <div class="chapter-head">
+    <div class="chapter-marker"><span class="cm-num">Ch. 08</span><span>V17 &middot; The Synthesis</span><span class="cm-year">2026 &mdash; Today</span></div>
+    <h2>Three engines. <em>One feedback loop.</em></h2>
+    <p class="chapter-lede">
+      V17 is the first version where every prior lesson is load-bearing. The 115 process features. The Time Machine Rule. The 5-layer architecture. T13RL. Tokenized sequences. Multi-agent simulation. Autonomous research. None of it is bolted on. All of it feeds itself.
+    </p>
+  </div>
+
+  <div class="chapter-body">
+    <div class="v-card live milestone">
+      <div class="v-badge">V17<span class="v-sub">Current build</span></div>
+      <div class="v-body">
+        <h3>Process + Form + Chess, fused</h3>
+        <p><strong>PARIS</strong> (the ML engine, built from V5&ndash;V14's 115-calculator stack) predicts from eight years of history. <strong>DENVER</strong> (the AutoResearch loop, born in V16.5) runs experiments while we sleep. <strong>TOKYO</strong> (the multi-agent simulation, the descendant of V16) plays the game a thousand times.</p>
+        <p>The simulation discovers features no human would engineer. Those features go into PARIS. The improved PARIS makes DENVER's experiments sharper. DENVER finds new architectures for TOKYO. Around and around.</p>
+        <p>Goal for the 2025 season: <strong>&lt;10% Percentage RMSE</strong> on our Golden Metrics. The target the project was founded on, seventeen builds ago.</p>
+        <div class="v-tags"><span class="v-tag shipped">Shipping</span><span class="v-tag breakthrough">Fused engines</span><span class="v-tag insight">Flywheel active</span></div>
+      </div>
+    </div>
+
+    <div class="pull-quote">
+      The seventeenth version is the first one that stopped trying to replace the prior sixteen. It inherited from them.
+      <span class="pq-attr">&mdash; V17 kickoff note</span>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CLOSING ========== -->
+<section class="story-close reveal">
+  <h2>The lesson seventeen versions taught us.</h2>
+  <p>Football projection isn't a feature-engineering problem. It isn't a model-selection problem. It's a <strong>discipline</strong> problem &mdash; keep the rules, audit yourself, and let the system rebuild itself faster than your competitors can rebuild theirs. That's V17. That's the moat.</p>
+  <a class="cta" href="index.html#demo">Watch the engine run</a>
+</section>
+
+<footer>
+  <p class="ft">Process-based prediction. Autonomous experimentation. Simulated football.</p>
+  <p>The first system that understands the game, not just the stats.</p>
+</footer>
+
+<script>
+// Reveal on scroll
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// Nav scroll
+window.addEventListener('scroll', () => {
+  document.querySelector('nav').classList.toggle('scrolled', window.scrollY > 40);
+}, { passive: true });
+</script>
+</body>
+</html>

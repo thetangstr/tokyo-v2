@@ -1,0 +1,7 @@
+.vercel
+.omc
+.context
+state
+docs
+*.log
+.DS_Store
