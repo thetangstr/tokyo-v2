@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snapcount — Architecture</title>
+<meta name="description" content="The data layer, eval harness, validation system, and live-snapshot contract that powers Snapcount. Walk-forward verified. Anti-leakage at split-time. 2025 quarantined.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e14;--chrome:#141821;--chrome-2:#1a1e28;--chrome-border:#252a38;
+  --gold:#c49000;--gold-bright:#e6b030;
+  --live:#e53935;--blue:#60a0ff;--green:#4caf50;--purple:#a060ff;
+  --bright:#f0f2f5;--text:#b8bcc6;--muted:#5a6070;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 1.5rem;background:rgba(10,14,20,.85);backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-color .3s}
+nav.scrolled{border-bottom-color:var(--chrome-border)}
+.nav-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:1.05rem;color:var(--bright);letter-spacing:-.02em;text-decoration:none}
+.logo span{color:var(--gold)}
+.nav-links{display:flex;gap:1.5rem;list-style:none;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.78rem;font-weight:500;letter-spacing:.03em;transition:color .2s}
+.nav-links a:hover,.nav-links a.current{color:var(--bright)}
+.nav-links a.current{color:var(--gold)}
+.nav-links a.cta{color:var(--gold);border:1px solid var(--gold);padding:.4rem .85rem;border-radius:3px;transition:all .2s}
+.nav-links a.cta:hover{background:var(--gold);color:var(--bg)}
+
+/* hero */
+.hero{padding:8rem 2rem 4rem;max-width:1280px;margin:0 auto}
+.kicker{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:1.5rem}
+.kicker .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-right:.6rem;animation:pulse 2s ease infinite;vertical-align:middle}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.hero h1{font-family:'Sora',sans-serif;font-size:clamp(2.25rem,5vw,3.75rem);font-weight:800;letter-spacing:-.04em;line-height:1.05;color:var(--bright);margin-bottom:1.5rem;max-width:900px}
+.hero h1 em{font-style:normal;color:var(--gold);font-weight:700}
+.hero-sub{font-size:1.1rem;color:var(--text);max-width:760px;line-height:1.7}
+
+/* TOC */
+.toc{background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;padding:1.5rem 1.75rem;margin:2.5rem 0 0;display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
+.toc a{color:var(--text);text-decoration:none;font-size:.85rem;padding:.6rem 0;border-left:2px solid transparent;padding-left:.85rem;transition:all .2s;display:flex;flex-direction:column}
+.toc a:hover{border-left-color:var(--gold);color:var(--bright)}
+.toc a span{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.1em;margin-bottom:.2rem}
+
+/* sections */
+section.s{padding:5rem 2rem;max-width:1280px;margin:0 auto}
+.s-head{margin-bottom:2.5rem}
+.s-head .kicker{margin-bottom:.85rem}
+.s-head h2{font-family:'Sora',sans-serif;font-size:clamp(1.7rem,3.5vw,2.5rem);font-weight:700;color:var(--bright);letter-spacing:-.03em;margin-bottom:1rem;line-height:1.15}
+.s-head p{font-size:1rem;color:var(--text);max-width:760px;line-height:1.65}
+
+/* pipeline svg flow */
+.flow-svg{background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;padding:2rem;margin-bottom:2rem;overflow-x:auto}
+.flow-svg svg{display:block;width:100%;min-width:900px;height:auto}
+
+.flow-text{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.flow-text-card{padding:1.25rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;border-left:2px solid var(--gold)}
+.flow-text-card h4{font-family:'Sora',sans-serif;font-size:.95rem;color:var(--bright);margin-bottom:.4rem;letter-spacing:-.01em}
+.flow-text-card .ftc-mono{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--gold);letter-spacing:.06em;margin-bottom:.6rem;text-transform:uppercase}
+.flow-text-card p{font-size:.85rem;color:var(--text);line-height:1.55}
+
+/* tables */
+.tbl-wrap{background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;overflow:hidden;overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.78rem;min-width:680px}
+.tbl th{text-align:left;padding:.85rem 1.25rem;background:var(--chrome-2);color:var(--muted);font-weight:600;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--chrome-border)}
+.tbl td{padding:.85rem 1.25rem;border-bottom:1px solid rgba(37,42,56,.4);color:var(--text);vertical-align:top;line-height:1.5}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(196,144,0,0.04)}
+.tbl .kind{color:var(--bright);font-weight:700;font-family:'Sora',sans-serif;font-size:.85rem;letter-spacing:-.01em}
+.tbl .kind .badge{display:inline-block;padding:.15em .45em;background:var(--gold);color:var(--bg);border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;margin-right:.5rem;letter-spacing:.04em}
+.tbl .kind.b{}
+.tbl .kind.b .badge{background:var(--blue)}
+.tbl .kind.c .badge{background:var(--green)}
+.tbl .kind.d .badge{background:var(--purple)}
+.tbl .kind.z .badge{background:var(--muted)}
+.tbl code{font-size:.95em;color:var(--gold);background:rgba(196,144,0,.08);padding:.05em .3em;border-radius:2px}
+.tbl .ok{color:var(--green);font-weight:700}
+.tbl .blocked{color:var(--live);font-weight:700}
+.tbl .warn{color:var(--gold);font-weight:700}
+
+/* split panes (validation/holdout) */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem}
+.split-pane{padding:1.75rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;border-top:2px solid var(--accent)}
+.split-pane.v{--accent:var(--blue)}
+.split-pane.h{--accent:var(--gold)}
+.split-pane .sp-tag{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.5rem;font-weight:700}
+.split-pane h3{font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:700;color:var(--bright);margin-bottom:.85rem;letter-spacing:-.02em}
+.split-pane p{font-size:.9rem;color:var(--text);line-height:1.6;margin-bottom:1rem}
+.split-pane .pred{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--gold);background:var(--bg);border:1px solid var(--chrome-border);border-radius:3px;padding:.65rem .85rem;letter-spacing:.04em;margin-top:.85rem}
+.split-pane ul{list-style:none;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text);margin-top:.85rem}
+.split-pane ul li{padding:.25rem 0;display:flex;justify-content:space-between;border-bottom:1px solid rgba(37,42,56,.4)}
+.split-pane ul li:last-child{border-bottom:none}
+.split-pane ul li .lk{color:var(--muted)}
+.split-pane ul li .lv{color:var(--bright);font-weight:600}
+
+/* live vs training surface */
+.surface{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem}
+.surface-pane{padding:1.5rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px}
+.surface-pane.allowed{border-left:3px solid var(--green)}
+.surface-pane.blocked{border-left:3px solid var(--live)}
+.surface-pane h3{font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:700;color:var(--bright);margin-bottom:.4rem;letter-spacing:-.01em}
+.surface-pane h3 .pl{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.08em;margin-left:.4rem;font-weight:700}
+.surface-pane.blocked h3 .pl{color:var(--live)}
+.surface-pane p{font-size:.82rem;color:var(--text);margin-bottom:1rem;line-height:1.55}
+.cols-list{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text);columns:2;column-gap:1.25rem;line-height:1.85}
+.cols-list .col{break-inside:avoid;display:block;color:var(--bright)}
+
+/* validator layers */
+.vlayers{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem}
+.vlayer{padding:1.6rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;border-top:3px solid var(--accent)}
+.vlayer.l1{--accent:var(--live)}
+.vlayer.l2{--accent:var(--gold)}
+.vlayer.l3{--accent:var(--blue)}
+.vlayer .vl-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.1em;margin-bottom:.4rem}
+.vlayer h3{font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--bright);margin-bottom:.5rem;letter-spacing:-.02em}
+.vlayer .vl-tag{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.85rem}
+.vlayer p{font-size:.85rem;color:var(--text);line-height:1.6;margin-bottom:.85rem}
+.vlayer ul{list-style:none;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text);margin-top:.5rem}
+.vlayer ul li{padding:.25rem 0;border-bottom:1px solid rgba(37,42,56,.4);position:relative;padding-left:.85rem}
+.vlayer ul li:last-child{border-bottom:none}
+.vlayer ul li::before{content:'·';position:absolute;left:0;color:var(--accent)}
+
+footer{padding:3rem 2rem 2rem;border-top:1px solid var(--chrome-border);max-width:1280px;margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:.06em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+
+@media(max-width:980px){
+  .toc{grid-template-columns:repeat(2,1fr)}
+  .flow-text,.split,.surface,.vlayers{grid-template-columns:1fr}
+  .cols-list{columns:1}
+  nav .nav-links li:not(:last-child){display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="/">Snap<span>count</span></a>
+    <ul class="nav-links">
+      <li><a href="/#products">Products</a></li>
+      <li><a href="/#proof">Numbers</a></li>
+      <li><a href="/#roadmap">Roadmap</a></li>
+      <li><a href="/architecture.html" class="current">Architecture</a></li>
+      <li><a href="/story.html">Story</a></li>
+      <li><a href="/slides.html" class="cta">Deck →</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="kicker"><span class="dot"></span>Architecture · Snapcount data + modeling layer</div>
+  <h1>Six stages.<br>Three independent gates.<br>One <em>quarantined</em> holdout.</h1>
+  <p class="hero-sub">This is the actual architecture, not a hand-wave. Each stage is re-runnable, idempotent, and refuses to start if the upstream stage failed. The validator hard-fails the pipeline on schema drift before bad data reaches modeling. The walk-forward harness invokes the leakage gate before the first model fit. The holdout 2025 season is read exactly once.</p>
+
+  <div class="toc">
+    <a href="#pipeline"><span>§ 01</span>The pipeline</a>
+    <a href="#taxonomy"><span>§ 02</span>Source taxonomy</a>
+    <a href="#eval"><span>§ 03</span>Two-tier eval</a>
+    <a href="#surface"><span>§ 04</span>Live vs training</a>
+    <a href="#validator"><span>§ 05</span>Validator (3 layers)</a>
+    <a href="#snapshot"><span>§ 06</span>Live snapshot contract</a>
+    <a href="#harness"><span>§ 07</span>Walk-forward harness</a>
+    <a href="#log"><span>§ 08</span>Decision log</a>
+  </div>
+</header>
+
+<section class="s" id="pipeline">
+  <div class="s-head">
+    <div class="kicker">§ 01 · The pipeline</div>
+    <h2>Ingest → Validate → Freeze → Features → Harness → Models</h2>
+    <p>Six stages, all idempotent. <code>scripts/ingest_raw.py</code> calls the validator inline; if validation fails, ingest exits non-zero and the freeze step refuses to start.</p>
+  </div>
+
+  <div class="flow-svg">
+    <svg viewBox="0 0 1100 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#c49000"/>
+        </marker>
+      </defs>
+      <!-- stages -->
+      <g font-family="JetBrains Mono, monospace" font-size="11" fill="#b8bcc6">
+        <g transform="translate(20,30)">
+          <rect width="140" height="90" rx="3" fill="#141821" stroke="#252a38"/>
+          <text x="14" y="22" fill="#c49000" font-weight="700" font-size="9" letter-spacing="1.5">01 / INGEST</text>
+          <text x="14" y="42" fill="#f0f2f5" font-family="Sora" font-weight="700" font-size="14">nflreadpy</text>
+          <text x="14" y="60" font-size="10">27 sources</text>
+          <text x="14" y="74" font-size="10">2016 → 2026</text>
+          <text x="14" y="84" font-size="9" fill="#5a6070">scripts/ingest_raw.py</text>
+        </g>
+        <g transform="translate(180,30)">
+          <rect width="140" height="90" rx="3" fill="#141821" stroke="#252a38"/>
+          <text x="14" y="22" fill="#c49000" font-weight="700" font-size="9" letter-spacing="1.5">02 / VALIDATE</text>
+          <text x="14" y="42" fill="#f0f2f5" font-family="Sora" font-weight="700" font-size="14">3-layer</text>
+          <text x="14" y="60" font-size="10">schema + coverage</text>
+          <text x="14" y="74" font-size="10">+ in-season currency</text>
+          <text x="14" y="84" font-size="9" fill="#5a6070">scripts/validate_raw.py</text>
+        </g>
+        <g transform="translate(340,30)">
+          <rect width="140" height="90" rx="3" fill="#141821" stroke="#252a38"/>
+          <text x="14" y="22" fill="#c49000" font-weight="700" font-size="9" letter-spacing="1.5">03 / FREEZE</text>
+          <text x="14" y="42" fill="#f0f2f5" font-family="Sora" font-weight="700" font-size="14">two-tier slice</text>
+          <text x="14" y="60" font-size="10">val 2024 wks 9+</text>
+          <text x="14" y="74" font-size="10">holdout 2025</text>
+          <text x="14" y="84" font-size="9" fill="#5a6070">scripts/freeze_holdout.py</text>
+        </g>
+        <g transform="translate(500,30)">
+          <rect width="140" height="90" rx="3" fill="#141821" stroke="#252a38"/>
+          <text x="14" y="22" fill="#c49000" font-weight="700" font-size="9" letter-spacing="1.5">04 / FEATURES</text>
+          <text x="14" y="42" fill="#f0f2f5" font-family="Sora" font-weight="700" font-size="14">Layer 0 + 1</text>
+          <text x="14" y="60" font-size="10">id-keys + lagged</text>
+          <text x="14" y="74" font-size="10">M3 adds 2/3/4</text>
+          <text x="14" y="84" font-size="9" fill="#5a6070">calculators/</text>
+        </g>
+        <g transform="translate(660,30)">
+          <rect width="140" height="90" rx="3" fill="#141821" stroke="#252a38"/>
+          <text x="14" y="22" fill="#c49000" font-weight="700" font-size="9" letter-spacing="1.5">05 / HARNESS</text>
+          <text x="14" y="42" fill="#f0f2f5" font-family="Sora" font-weight="700" font-size="14">walk-forward CV</text>
+          <text x="14" y="60" font-size="10">leakage gate</text>
+          <text x="14" y="74" font-size="10">14 folds 2024 wk 9-22</text>
+          <text x="14" y="84" font-size="9" fill="#5a6070">eval/harness.py</text>
+        </g>
+        <g transform="translate(820,30)">
+          <rect width="140" height="90" rx="3" fill="#141821" stroke="#252a38"/>
+          <text x="14" y="22" fill="#c49000" font-weight="700" font-size="9" letter-spacing="1.5">06 / MODELS</text>
+          <text x="14" y="42" fill="#f0f2f5" font-family="Sora" font-weight="700" font-size="14">Ridge / XGB</text>
+          <text x="14" y="60" font-size="10">8 (pos × target)</text>
+          <text x="14" y="74" font-size="10">target-aware loss</text>
+          <text x="14" y="84" font-size="9" fill="#5a6070">models/</text>
+        </g>
+      </g>
+      <!-- arrows -->
+      <g stroke="#c49000" stroke-width="1.5" fill="none">
+        <line x1="160" y1="75" x2="180" y2="75" marker-end="url(#arr)"/>
+        <line x1="320" y1="75" x2="340" y2="75" marker-end="url(#arr)"/>
+        <line x1="480" y1="75" x2="500" y2="75" marker-end="url(#arr)"/>
+        <line x1="640" y1="75" x2="660" y2="75" marker-end="url(#arr)"/>
+        <line x1="800" y1="75" x2="820" y2="75" marker-end="url(#arr)"/>
+      </g>
+      <!-- gates -->
+      <g font-family="JetBrains Mono, monospace" font-size="9" fill="#5a6070" letter-spacing="1.5">
+        <text x="170" y="155">↓ FAILS HERE</text>
+        <text x="170" y="170" fill="#e53935" font-weight="700">if schema drift</text>
+        <text x="670" y="155">↓ FAILS HERE</text>
+        <text x="670" y="170" fill="#e53935" font-weight="700">if leakage gate</text>
+      </g>
+      <!-- holdout vault -->
+      <g transform="translate(340,150)">
+        <rect width="300" height="55" rx="3" fill="#1a1e28" stroke="#c49000" stroke-dasharray="4,2"/>
+        <text x="14" y="22" fill="#c49000" font-family="JetBrains Mono, monospace" font-weight="700" font-size="10" letter-spacing="1.5">→ HOLDOUT 2025</text>
+        <text x="14" y="40" fill="#f0f2f5" font-family="Sora" font-weight="700" font-size="13">data/holdout_2025/ · NEVER read in loop</text>
+        <text x="14" y="50" fill="#5a6070" font-family="JetBrains Mono, monospace" font-size="9">read once at ship-gate</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="flow-text">
+    <div class="flow-text-card">
+      <div class="ftc-mono">FAIL-CLOSED</div>
+      <h4>Three independent gates, all enforced</h4>
+      <p>(1) <code>validate_raw.py</code> hard-fails ingest on schema drift. (2) <code>walk_forward_splits</code> invokes <code>validate_feature_columns(live=True)</code> at split-time, before any model fit. (3) <code>holdout_seasons=(2025,)</code> is honored by both walk-forward and season-rollover splits, AND by the runner's pre-filter.</p>
+    </div>
+    <div class="flow-text-card">
+      <div class="ftc-mono">IDEMPOTENT</div>
+      <h4>Re-run anything, get the same artifact</h4>
+      <p>Every stage writes a deterministic output. Re-running ingest produces the same parquets (modulo nflverse releases). Re-running freeze produces the same slices. Re-running the harness produces bit-identical fold predictions (XGBoost <code>tree_method=hist</code> + <code>random_state=0</code>; sklearn Ridge with <code>random_state=0</code>).</p>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="taxonomy">
+  <div class="s-head">
+    <div class="kicker">§ 02 · Source taxonomy</div>
+    <h2>Four schema kinds. One filter rule each.</h2>
+    <p>Every nflverse source falls into one of four schemas. Knowing which one a source belongs to determines how we filter it for slicing.</p>
+  </div>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th style="width:24%">Kind</th><th style="width:30%">Defining trait</th><th style="width:24%">Filter rule</th><th>Example sources</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="kind"><span class="badge">A</span>Season + Week</td>
+          <td>Has <code>season</code> AND <code>week</code> columns; no <code>nflverse_game_id</code></td>
+          <td><code>season == X AND (week ≥ min_week OR week IS NULL)</code></td>
+          <td>pbp, player_stats, team_stats, schedules, snap_counts, officials, ngs_*, rosters_weekly, injuries, pfr_advstats_*, depth_charts_legacy, ff_opportunity_weekly</td>
+        </tr>
+        <tr>
+          <td class="kind b"><span class="badge">B</span>Season only</td>
+          <td>Has <code>season</code> but no <code>week</code> (annual snapshot)</td>
+          <td><code>season == X</code></td>
+          <td>rosters</td>
+        </tr>
+        <tr>
+          <td class="kind c"><span class="badge">C</span>Game-keyed</td>
+          <td>Has <code>nflverse_game_id</code> as authoritative join (with or without season/week)</td>
+          <td><code>nflverse_game_id IN slice.game_ids</code></td>
+          <td>participation, ftn_charting</td>
+        </tr>
+        <tr>
+          <td class="kind d"><span class="badge">D</span>Timestamp-keyed</td>
+          <td>Has <code>dt</code> ISO8601 column instead of season/week</td>
+          <td><code>dt ∈ [Aug 1 of season X, Mar 1 of X+1)</code></td>
+          <td>depth_charts_timestamped (post-2025 nflverse schema)</td>
+        </tr>
+        <tr>
+          <td class="kind z"><span class="badge">Z</span>All-time</td>
+          <td>No season key (reference tables)</td>
+          <td>Not slice-able; read whole</td>
+          <td>players, teams, combine, draft_picks, contracts, ff_playerids</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="s" id="eval">
+  <div class="s-head">
+    <div class="kicker">§ 03 · Two-tier eval</div>
+    <h2>Validation drives the loop. Holdout opens the gate.</h2>
+    <p>The freeze produces two physically-separate slice directories. Both are read-only post-freeze; the AutoResearch loop is contractually forbidden from writing to them.</p>
+  </div>
+  <div class="split">
+    <div class="split-pane v">
+      <div class="sp-tag">VALIDATION · loop reads on every iteration</div>
+      <h3>2024 weeks 9 onwards</h3>
+      <p>Drives the AutoResearch loop's keep-or-revert decision. Every change to features, model class, hyperparameters, anything — gets evaluated here. Walk-forward CV across 14 folds (weeks 9-22), per fold the model trains on everything strictly earlier and predicts the target week.</p>
+      <div class="pred">season == 2024 AND week ≥ 9</div>
+      <ul>
+        <li><span class="lk">games</span><span class="lv">162</span></li>
+        <li><span class="lk">PBP rows</span><span class="lv">28,198</span></li>
+        <li><span class="lk">walk-forward folds</span><span class="lv">14</span></li>
+        <li><span class="lk">path</span><span class="lv">data/validation_2024_w9plus/</span></li>
+      </ul>
+    </div>
+    <div class="split-pane h">
+      <div class="sp-tag">HOLDOUT · ship-gate only · NEVER in loop</div>
+      <h3>2025 entire season</h3>
+      <p>The sacred ship-gate. The AutoResearch loop NEVER reads this. Belt + suspenders: <code>run_baseline.py</code> drops <code>season == 2025</code> from the input frame BEFORE the harness; <code>walk_forward_splits</code> filters again; <code>holdout_seasons</code> is honored by both split flavors.</p>
+      <div class="pred">season == 2025 (all weeks 0..23)</div>
+      <ul>
+        <li><span class="lk">games</span><span class="lv">285</span></li>
+        <li><span class="lk">PBP rows</span><span class="lv">48,771</span></li>
+        <li><span class="lk">depth-chart events</span><span class="lv">517,851</span></li>
+        <li><span class="lk">path</span><span class="lv">data/holdout_2025/</span></li>
+      </ul>
+    </div>
+  </div>
+  <p style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.04em;line-height:1.7">Per-source filtering uses one of four functions depending on the source's kind: <code>_filt_season_week</code> (predicate-based, captures wk 0/23/null), <code>_filt_season_only</code>, <code>_filt_nflverse_game_id</code>, <code>_filt_dt_year</code>. Two invariants enforced: (1) every source filters cleanly for at least one slice; (2) row counts match the raw season-predicate count exactly — no silent leak from PBP-only pair sets.</p>
+</section>
+
+<section class="s" id="surface">
+  <div class="s-head">
+    <div class="kicker">§ 04 · Live vs training surface</div>
+    <h2>Some columns are training-only. The validator enforces this.</h2>
+    <p>The model that ships to <code>POST /api/snapscore/predict</code> runs the LIVE pipeline. A research model can use the full training surface for upper-bound studies, but it doesn't serve traffic.</p>
+  </div>
+  <div class="surface">
+    <div class="surface-pane allowed">
+      <h3>Live surface <span class="pl">ALLOWED</span></h3>
+      <p>Released within ~24h of game completion or known pre-kickoff. Safe to use as features in the production pipeline.</p>
+      <div class="cols-list">
+        <span class="col">pbp pre-kickoff cols</span>
+        <span class="col">player_stats lagged</span>
+        <span class="col">schedules + Vegas</span>
+        <span class="col">snap_counts lagged</span>
+        <span class="col">avg_time_to_throw</span>
+        <span class="col">aggressiveness</span>
+        <span class="col">CPOE</span>
+        <span class="col">avg_separation</span>
+        <span class="col">RYOE</span>
+        <span class="col">avg_yac_above_expectation</span>
+        <span class="col">pfr_advstats_week_*</span>
+        <span class="col">ftn_charting lagged</span>
+        <span class="col">rosters_weekly</span>
+        <span class="col">depth_charts (live)</span>
+      </div>
+    </div>
+    <div class="surface-pane blocked">
+      <h3>Block-list <span class="pl">FORBIDDEN LIVE</span></h3>
+      <p>Three surfaces: every column in <code>participation.parquet</code> (FTN end-of-regular-season backfill), PBP postgame mirrors, post-game telemetry.</p>
+      <div class="cols-list">
+        <span class="col">was_pressure</span>
+        <span class="col">route</span>
+        <span class="col">defense_coverage_type</span>
+        <span class="col">defense_man_zone_type</span>
+        <span class="col">ngs_air_yards</span>
+        <span class="col">time_to_throw <em style="color:var(--muted);font-style:normal">(per-play)</em></span>
+        <span class="col">n_pass_rushers</span>
+        <span class="col">n_offense / n_defense</span>
+        <span class="col">defenders_in_box</span>
+        <span class="col">offense_personnel</span>
+        <span class="col">defense_personnel</span>
+        <span class="col">offense_formation</span>
+        <span class="col">epa / wpa / qb_epa</span>
+        <span class="col">yards_gained / play_type</span>
+        <span class="col">complete_pass / fumble</span>
+        <span class="col">temp / wind</span>
+        <span class="col">head_official</span>
+        <span class="col">series_result</span>
+        <span class="col">fixed_drive_result</span>
+      </div>
+    </div>
+  </div>
+  <p style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.04em;line-height:1.7;margin-top:1rem">
+    Per <strong>@realfrankbrank 2025-09-02</strong> (FTN): "we will backfill each year at the end of the regular season." 2025 participation lands ~Feb 2026 post-Super-Bowl. <strong>The leakage validator runs at split-time</strong> via <code>validate_feature_columns(feature_columns, live=True)</code>; any pipeline using a forbidden column raises <code>LeakageError</code> before training starts. 16 anti-leakage tests pin the contract; one is schema-driven against the actual <code>participation.parquet</code> file.
+  </p>
+</section>
+
+<section class="s" id="validator">
+  <div class="s-head">
+    <div class="kicker">§ 05 · Validator (3 layers)</div>
+    <h2>scripts/validate_raw.py — three layers, fail-closed.</h2>
+    <p>Schema drift catches added/removed/dtype-changed columns. Coverage invariants catch missing seasons + weeks + key uniqueness violations. In-season currency catches a stale ingest at game-day. Each layer is independently tested with planted-regression smoke tests.</p>
+  </div>
+  <div class="vlayers">
+    <div class="vlayer l1">
+      <div class="vl-num">LAYER 1</div>
+      <h3>Schema drift</h3>
+      <div class="vl-tag">HARD FAIL</div>
+      <p>Diff against <code>data/raw/_expected_schemas.json</code> (committed baseline). Any column that disappears, or whose dtype changes, fails the ingest.</p>
+      <ul>
+        <li>Removed columns</li>
+        <li>Changed dtypes</li>
+        <li>Added columns (warn only)</li>
+      </ul>
+    </div>
+    <div class="vlayer l2">
+      <div class="vl-num">LAYER 2</div>
+      <h3>Coverage invariants</h3>
+      <div class="vl-tag">HARD FAIL</div>
+      <p>Per-source row count, per-season presence, per-week-set match. Plus PBP <code>(game_id, play_id)</code> uniqueness and depth-charts dual-schema invariant.</p>
+      <ul>
+        <li>Row count regression &gt; 10%</li>
+        <li>Missing season</li>
+        <li>Missing week per season</li>
+        <li>PBP key uniqueness</li>
+        <li>Dual-schema integrity</li>
+      </ul>
+    </div>
+    <div class="vlayer l3">
+      <div class="vl-num">LAYER 3</div>
+      <h3>In-season currency</h3>
+      <div class="vl-tag">HARD FAIL (in-season)</div>
+      <p>If today is in the NFL game window (Sept-Feb), 14 live-critical sources MUST have rows for the current season AND latest-week lag ≤ 2 weeks behind today. Otherwise predictions go stale.</p>
+      <ul>
+        <li>Current season presence</li>
+        <li>Lag &gt; 2 wks → fail</li>
+        <li>Lag = 1 wk → warn</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="snapshot">
+  <div class="s-head">
+    <div class="kicker">§ 06 · Live snapshot contract</div>
+    <h2>Per-source max-staleness, enforced at predict time.</h2>
+    <p>Pre-kickoff inputs (current injuries, current depth charts, current Vegas lines, weather forecast, inactives list) are moving targets. Every prediction binds to a single <code>(target_game_id, as_of_ts)</code> tuple with per-source freshness guarantees. <strong>M_serve scope</strong>; spec'd in M0 architecture.</p>
+  </div>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Live source</th><th>Provider</th><th style="text-align:right">max_staleness</th><th>Rationale</th></tr></thead>
+      <tbody>
+        <tr><td><code>injuries</code></td><td>Adam's ESPN/PFR scrape</td><td style="text-align:right" class="warn">4h</td><td>NFL official injury reports finalize Fri 4 PM ET; can shift Sat AM</td></tr>
+        <tr><td><code>depth_charts</code></td><td>nflverse depth_charts_timestamped</td><td style="text-align:right">24h</td><td>Daily updates; rare same-day swings unless injury cascade</td></tr>
+        <tr><td><code>vegas_lines</code></td><td>Sportsbook API (TBD)</td><td style="text-align:right" class="warn">1h</td><td>Lines move fast near kickoff; sharp money typically lands T-3h</td></tr>
+        <tr><td><code>weather_forecast</code></td><td>NWS / Tomorrow.io</td><td style="text-align:right">6h</td><td>Forecast accuracy stabilizes inside 6h of kickoff</td></tr>
+        <tr><td><code>inactives</code></td><td>NFL inactives feed</td><td style="text-align:right" class="warn">1.5h</td><td>Officially announced 90 min before kickoff</td></tr>
+        <tr><td><code>rosters_weekly</code></td><td>nflverse</td><td style="text-align:right">7d</td><td>Updates Wed; covers the gameweek</td></tr>
+        <tr><td><code>schedules</code> (Vegas opening)</td><td>nflverse schedules</td><td style="text-align:right">24h</td><td>Opening line + venue + opponent — slow-changing</td></tr>
+        <tr><td><code>pbp_lagged</code> / <code>ngs_lagged</code></td><td>nflverse</td><td style="text-align:right">48h</td><td>Prior-week stats; landed by Tue AM</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.04em;line-height:1.7;margin-top:1rem">
+    A snapshot is <strong>valid</strong> iff every source's <code>actual_staleness_seconds ≤ max_staleness_seconds</code>. Otherwise the loader raises <code>StaleSnapshotError</code> and the prediction is blocked. <code>POST /api/snapscore/predict</code> returns 503 instead of guessing.
+  </p>
+</section>
+
+<section class="s" id="harness">
+  <div class="s-head">
+    <div class="kicker">§ 07 · Walk-forward harness</div>
+    <h2>The contract: predict at (S, W) reads only data from before (S, W).</h2>
+    <p>17 boundary tests pin this contract via synthetic frames. Every fit instantiates a fresh model — no parameters carry across folds. The imputer + scaler fit on each fold's train rows separately; no global statistics leak.</p>
+  </div>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Invariant</th><th>What's tested</th><th style="width:20%">Status</th></tr></thead>
+      <tbody>
+        <tr><td>train never contains target week</td><td><code>train.filter(season == S AND week == W).is_empty()</code></td><td class="ok">✓ pinned</td></tr>
+        <tr><td>train never contains future seasons</td><td><code>train.filter(season &gt; S).is_empty()</code></td><td class="ok">✓ pinned</td></tr>
+        <tr><td>train never contains future weeks same season</td><td><code>train.filter(season == S AND week &gt; W).is_empty()</code></td><td class="ok">✓ pinned</td></tr>
+        <tr><td>train DOES contain prior seasons</td><td>positive coverage check</td><td class="ok">✓ pinned</td></tr>
+        <tr><td>train DOES contain prior weeks of same season</td><td>positive coverage check</td><td class="ok">✓ pinned</td></tr>
+        <tr><td>train sizes monotonically grow fold-over-fold</td><td>walk-forward shape</td><td class="ok">✓ pinned</td></tr>
+        <tr><td>min_train_weeks gate filters early folds</td><td>no fold fires with insufficient train</td><td class="ok">✓ pinned</td></tr>
+        <tr><td>season_filter restricts predict seasons</td><td>arg-handling correctness</td><td class="ok">✓ pinned</td></tr>
+        <tr><td>holdout_seasons excluded from train AND predict</td><td>quarantine integrity</td><td class="ok">✓ pinned</td></tr>
+        <tr><td>leakage gate fires at split-time on blocked column</td><td>raises before any fit</td><td class="ok">✓ pinned</td></tr>
+        <tr><td>training mode permits everything (live=False)</td><td>gate is gated on live flag</td><td class="ok">✓ pinned</td></tr>
+        <tr><td>schema-driven leakage coverage from disk</td><td>every participation column blocked</td><td class="ok">✓ pinned</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="s" id="log">
+  <div class="s-head">
+    <div class="kicker">§ 08 · Decision log</div>
+    <h2>What we deliberately chose, with dates.</h2>
+    <p>Every architectural decision is logged with a date and a reason. Future readers see the why, not just the what.</p>
+  </div>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th style="width:15%">Date</th><th>Decision</th><th style="width:40%">Why</th></tr></thead>
+      <tbody>
+        <tr><td>2026-05-08</td><td>Migrate from <code>nfl_data_py</code> to <code>nflreadpy</code></td><td>Upstream parquet renames broke 2025 ingest under the archived nfl_data_py</td></tr>
+        <tr><td>2026-05-08</td><td>Two-tier eval (validation 2024 wks 9+ + holdout 2025)</td><td>Validation drives the loop; holdout is sacred ship-gate</td></tr>
+        <tr><td>2026-05-08</td><td>Split <code>depth_charts</code> at ingest</td><td>nflverse changed schema mid-2025; one parquet would mix two key formats</td></tr>
+        <tr><td>2026-05-09</td><td>Predicate-based filtering (not pair-set) for Kind A</td><td>Codex C1: PBP wks 1-22 missed NGS wk 0/23 + officials wk 23, leak risk</td></tr>
+        <tr><td>2026-05-09</td><td>Add <code>validate_raw.py</code> 3-layer validator</td><td>Catch silent nflverse regressions at ingest, not at modeling</td></tr>
+        <tr><td>2026-05-09</td><td>Holdout <code>min_week=0</code> (full season including wk 0/23)</td><td>Ensure NGS preseason aggregates can never leak to training</td></tr>
+        <tr><td>2026-05-09</td><td>Commit <code>_expected_schemas.json</code> baseline</td><td>Anyone cloning the repo can verify their fresh ingest matches our committed baseline</td></tr>
+        <tr><td>2026-05-09</td><td>XGBoost target-aware objective (poisson for TDs)</td><td>Poisson predicts non-negative rate; fixes Ridge "negative TD" sMAPE inflation</td></tr>
+        <tr><td>2026-05-09</td><td>Add <code>team_changed_since_last_game</code> indicator (codex F4)</td><td>Lets model down-weight prior-team signal on free-agency / trades</td></tr>
+        <tr><td>2026-05-09</td><td>Block <code>play_id</code> + <code>nflverse_game_id</code> in leakage gate (codex F1)</td><td>Even though these are normally join keys, the validator's contract is "no FEATURE column from participation"</td></tr>
+        <tr><td>2026-05-09</td><td>Remove <code>min_target_value</code> auto-default (codex F2)</td><td>Label-based filter introduced selection bias; default cohort is now unfiltered</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 Snapcount · greenfield, agent-orchestrated</span>
+  <span>m2-xgboost · 33/33 tests · 5 codex rounds</span>
+</footer>
+
+<script>
+const nav=document.querySelector('nav');
+window.addEventListener('scroll',()=>{nav.classList.toggle('scrolled',window.scrollY>10)});
+</script>
+</body>
+</html>

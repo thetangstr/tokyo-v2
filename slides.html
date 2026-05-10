@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snapcount — The Deck</title>
+<meta name="description" content="Snapcount in 18 slides: agent-orchestrated NFL prediction, walk-forward verified, 2025 quarantined.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<style>
+:root{
+  --bg:#0a0e14;--chrome:#141821;--chrome-2:#1a1e28;--chrome-border:#252a38;
+  --gold:#c49000;--gold-bright:#e6b030;
+  --live:#e53935;--blue:#60a0ff;--green:#4caf50;--purple:#a060ff;
+  --bright:#f0f2f5;--text:#b8bcc6;--muted:#5a6070;
+}
+
+/* reveal overrides */
+.reveal-viewport{background:var(--bg) !important}
+.reveal{font-family:'Inter',sans-serif;color:var(--text);font-size:32px}
+.reveal .slides{text-align:left}
+.reveal .slides section{padding:0 4rem;height:100%;display:flex !important;flex-direction:column;justify-content:center}
+.reveal .slides section.title-slide{justify-content:center;align-items:flex-start}
+
+/* typography */
+.reveal h1,.reveal h2,.reveal h3,.reveal h4{font-family:'Sora',sans-serif;color:var(--bright);text-transform:none;letter-spacing:-.025em;font-weight:700;line-height:1.05;margin:0 0 1rem 0}
+.reveal h1{font-size:3.5em;font-weight:800;letter-spacing:-.04em}
+.reveal h1 em{font-style:normal;color:var(--gold);font-weight:700}
+.reveal h1 .strike{text-decoration:line-through;text-decoration-color:var(--muted);text-decoration-thickness:2px;color:var(--muted)}
+.reveal h2{font-size:2.4em;font-weight:700}
+.reveal h2 em{font-style:normal;color:var(--gold);font-weight:700}
+.reveal h3{font-size:1.6em;color:var(--bright);margin-bottom:.6em}
+.reveal h4{font-size:1.1em;color:var(--gold);margin-bottom:.4em;font-family:'JetBrains Mono',monospace;letter-spacing:.05em;font-weight:700;text-transform:uppercase}
+.reveal p{font-size:.85em;line-height:1.55;margin:.4em 0;color:var(--text)}
+.reveal p strong{color:var(--bright);font-weight:600}
+.reveal p em.gold{font-style:normal;color:var(--gold)}
+.reveal code{font-family:'JetBrains Mono',monospace;color:var(--gold);background:var(--chrome);padding:.05em .35em;border-radius:2px;font-size:.85em;border:1px solid var(--chrome-border)}
+.reveal ul,.reveal ol{font-size:.85em;line-height:1.7;margin:.4em 0 .4em 1.5em;color:var(--text)}
+.reveal ul li::marker{color:var(--gold)}
+
+/* kicker / chrome elements */
+.kicker{font-family:'JetBrains Mono',monospace;font-size:.55em !important;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem !important;opacity:.95}
+.kicker .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-right:.6rem;vertical-align:middle}
+.lede{font-size:.9em !important;line-height:1.55;color:var(--text);max-width:1100px;margin:.6em 0}
+.tag{font-family:'JetBrains Mono',monospace;font-size:.55em;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+
+/* card grids */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-top:.85em}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:.85em}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-top:.85em}
+.card{padding:1rem 1.1rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;border-top:2px solid var(--accent,var(--gold));font-size:.55em !important;line-height:1.55}
+.card.c1{--accent:var(--green)}
+.card.c2{--accent:var(--blue)}
+.card.c3{--accent:var(--gold)}
+.card.c4{--accent:var(--purple)}
+.card .ck{font-family:'JetBrains Mono',monospace;font-size:.85em;color:var(--accent,var(--gold));letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-bottom:.4em}
+.card h4{font-family:'Sora',sans-serif;color:var(--bright);font-size:1.5em !important;margin-bottom:.3em;letter-spacing:-.01em;font-weight:700;text-transform:none}
+.card p{font-size:.95em !important;line-height:1.5;color:var(--text);margin:0}
+
+/* big stat strips */
+.stats-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:.6rem;margin-top:1em}
+.ss{padding:.85rem 1rem;background:var(--chrome);border:1px solid var(--chrome-border);border-left:2px solid var(--gold);border-radius:3px}
+.ss .ssn{font-family:'Sora',sans-serif;font-size:.95em;font-weight:700;color:var(--bright);letter-spacing:-.02em;line-height:1}
+.ss .ssl{font-family:'JetBrains Mono',monospace;font-size:.4em;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:.4em;line-height:1.2}
+
+/* table */
+.tbl{font-family:'JetBrains Mono',monospace;font-size:.5em;width:100%;border-collapse:collapse;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;overflow:hidden;margin-top:1em}
+.tbl th{text-align:left;padding:.75rem 1rem;background:var(--chrome-2);color:var(--muted);font-weight:600;font-size:.85em;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--chrome-border)}
+.tbl td{padding:.65rem 1rem;border-bottom:1px solid rgba(37,42,56,0.4);color:var(--text)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl .pos{color:var(--bright);font-weight:700;font-family:'Sora',sans-serif;font-size:1.05em}
+.tbl .num{color:var(--bright);text-align:right;font-weight:600}
+.tbl .winner{color:var(--gold);font-weight:700;text-transform:uppercase;font-size:.95em;letter-spacing:.06em}
+.tbl .winner.tie{color:var(--muted)}
+
+/* timeline (roadmap) */
+.tline{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin-top:1em;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;overflow:hidden}
+.tline-step{padding:1rem .85rem;border-right:1px solid var(--chrome-border);text-align:center;background:var(--chrome);font-size:.55em !important}
+.tline-step:last-child{border-right:none}
+.tline-step .ts-id{font-family:'JetBrains Mono',monospace;font-size:.95em;font-weight:700;letter-spacing:.1em;color:var(--muted)}
+.tline-step.done .ts-id{color:var(--green)}
+.tline-step.now .ts-id{color:var(--gold)}
+.tline-step .ts-icon{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--chrome-2);border:2px solid var(--chrome-border);margin:.5em auto;position:relative}
+.tline-step.done .ts-icon{background:var(--green);border-color:var(--green)}
+.tline-step.now .ts-icon{background:var(--gold);border-color:var(--gold);box-shadow:0 0 0 4px rgba(196,144,0,.2)}
+.tline-step .ts-name{font-family:'Sora',sans-serif;font-weight:700;color:var(--bright);font-size:1.05em;margin-bottom:.25em;letter-spacing:-.01em}
+.tline-step .ts-desc{font-family:'Inter',sans-serif;font-size:.95em;color:var(--text);line-height:1.45}
+
+/* split panes */
+.split-2{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-top:1em}
+.sp{padding:1.2rem 1.4rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;border-top:2px solid var(--accent)}
+.sp.allow{--accent:var(--green)}
+.sp.block{--accent:var(--live)}
+.sp .sptag{font-family:'JetBrains Mono',monospace;font-size:.4em;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;font-weight:700;margin-bottom:.5em}
+.sp h3{font-family:'Sora',sans-serif;font-size:1.5em !important;color:var(--bright);margin-bottom:.5em;letter-spacing:-.02em}
+.sp p{font-size:.55em !important;line-height:1.5;color:var(--text)}
+.sp .clist{font-family:'JetBrains Mono',monospace;font-size:.45em;line-height:1.7;color:var(--bright);column-count:2;column-gap:.85rem;margin-top:.5em}
+
+/* big number callout */
+.bigcall{text-align:center;margin:2em auto}
+.bigcall .bc-n{font-family:'Sora',sans-serif;font-size:7em;font-weight:800;color:var(--gold);letter-spacing:-.05em;line-height:1}
+.bigcall .bc-l{font-family:'JetBrains Mono',monospace;font-size:.7em;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin-top:.5em}
+
+/* footer chrome */
+.footer-bar{position:absolute;bottom:1.5rem;left:4rem;right:4rem;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.32em;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.footer-bar .fb-l a{color:var(--muted);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .15s}
+.footer-bar .fb-l a:hover{border-bottom-color:var(--gold);color:var(--bright)}
+
+/* progress bar (reveal) */
+.reveal .progress{color:var(--gold) !important;height:2px}
+.reveal .controls{color:var(--gold) !important}
+.reveal .controls .navigate-left,.reveal .controls .navigate-right,.reveal .controls .navigate-up,.reveal .controls .navigate-down{color:var(--gold) !important}
+
+/* slide number */
+.reveal .slide-number{background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em}
+.reveal .slide-number a{color:var(--muted)}
+
+/* quote */
+.bigquote{font-family:'Source Serif 4',serif;font-size:1.7em;font-style:italic;color:var(--bright);line-height:1.3;margin:1.2em 0;border-left:3px solid var(--gold);padding-left:1.3em}
+.bigquote .cite{display:block;margin-top:.85em;font-family:'JetBrains Mono',monospace;font-size:.4em;font-style:normal;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+
+.deck-hero h1{font-size:3.8em;line-height:1.02}
+.principle-list{list-style:none;margin-left:0;margin-top:.5em;font-size:.85em}
+.principle-list li{padding:.5em 0;padding-left:1.5em;position:relative;border-bottom:1px solid rgba(37,42,56,0.4)}
+.principle-list li:last-child{border-bottom:none}
+.principle-list li::before{content:'→';position:absolute;left:0;color:var(--gold);font-weight:700}
+.principle-list li strong{color:var(--bright);font-weight:600}
+
+/* CTA */
+.cta-row{display:flex;gap:1rem;margin-top:1.5em;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.3rem;font-family:'Inter',sans-serif;font-size:.45em;font-weight:600;letter-spacing:.02em;text-decoration:none;border-radius:3px;transition:all .2s;border:1px solid transparent}
+.btn-primary{background:var(--gold);color:var(--bg)}
+.btn-primary:hover{background:var(--gold-bright)}
+.btn-ghost{color:var(--text);border-color:var(--chrome-border)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--bright)}
+</style>
+</head>
+<body>
+
+<div class="reveal">
+  <div class="slides">
+
+    <!-- 01 — TITLE -->
+    <section class="title-slide deck-hero">
+      <div class="kicker"><span class="dot"></span>Snapcount · the deck · 18 slides</div>
+      <h1>The multi-agent engine<br>for <em>NFL prediction</em>.</h1>
+      <p class="lede" style="font-size:1em !important;max-width:900px;margin-top:1em">Greenfield from PRD intent. Walk-forward verified. <strong>2025 quarantined</strong>. Built by four AI agents and one human in twenty-four hours of working time.</p>
+      <div class="cta-row" style="margin-top:2em">
+        <span class="tag">Press SPACE to advance · ESC for overview</span>
+      </div>
+      <div class="footer-bar"><span class="fb-l"><a href="/">snapcount.ai</a></span><span>m2-xgboost · 33/33 tests · 5 codex rounds</span></div>
+    </section>
+
+    <!-- 02 — THE CLAIM -->
+    <section>
+      <div class="kicker">01 · The claim</div>
+      <h1>We don't <span class="strike">predict</span><br>football. We <em>orchestrate</em> it.</h1>
+      <p class="lede" style="margin-top:1.5em">A prediction is not a single number from a single model. It's the output of <strong>four cooperating systems</strong> running on <strong>484,254 plays</strong> of NFL data, gated by anti-leakage tests, audited by an independent LLM, and bound to a freshness contract before it reaches production.</p>
+      <div class="footer-bar"><span class="fb-l">02 · The claim</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 03 — PROBLEM -->
+    <section>
+      <div class="kicker">02 · The problem</div>
+      <h2>Most NFL models are <em>quietly broken</em>.</h2>
+      <ul style="margin-top:1em">
+        <li>Walk-forward CV is rare. Random k-fold leaks future games into training folds and inflates accuracy.</li>
+        <li>Participation columns (was_pressure, route, defense_coverage_type) are FTN end-of-season backfill — never available live, but routinely used as features.</li>
+        <li>"Quarantined holdout" usually means "we showed the model the holdout while tuning."</li>
+        <li>TD predictions go negative under squared-error regression and nobody notices because MAE is small.</li>
+        <li>The validation harness self-approves. There's no independent reviewer.</li>
+      </ul>
+      <p class="lede" style="margin-top:1.2em"><strong>Snapcount fixes all five at the data layer, not the model layer.</strong></p>
+      <div class="footer-bar"><span class="fb-l">03 · The problem</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 04 — IN ONE SENTENCE -->
+    <section>
+      <div class="kicker">03 · Snapcount in one sentence</div>
+      <h2>Snapcount turns nflverse data into <em>per-player projections</em>, calibrated correlations, and explanations you can read in plain English.</h2>
+      <div class="stats-strip">
+        <div class="ss"><div class="ssn">27</div><div class="ssl">nflverse sources<br>2016 → 2025</div></div>
+        <div class="ss"><div class="ssn">484K</div><div class="ssl">plays analyzed<br>372 cols deep</div></div>
+        <div class="ss"><div class="ssn">8</div><div class="ssl">player targets<br>baselined</div></div>
+        <div class="ss"><div class="ssn">33/33</div><div class="ssl">anti-leakage tests<br>passing</div></div>
+        <div class="ss"><div class="ssn">5</div><div class="ssl">codex audit rounds<br>passed</div></div>
+      </div>
+      <div class="footer-bar"><span class="fb-l">04 · In one sentence</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 05 — PRODUCT SURFACE -->
+    <section>
+      <div class="kicker">04 · Product surface · Four agents, one stack</div>
+      <h2>Four products. One feedback loop.</h2>
+      <div class="grid-4">
+        <div class="card c1"><div class="ck">01 / SNAPSCORE</div><h4>SnapScore</h4><p>XGBoost on a walk-forward harness. Per-player projections for 8 fantasy targets. Holdout 2025 quarantined.</p></div>
+        <div class="card c2"><div class="ck">02 / SNAPFORM</div><h4>SnapForm</h4><p>Closed-form formulas for live signals. Injury decay, weather penalties, snap-share trajectories. Adam-owned.</p></div>
+        <div class="card c3"><div class="ck">03 / SNAPPRO</div><h4>SnapPro</h4><p>API + correlation matrix. Underwrites parlays, lineups, prop combos. TB12-owned.</p></div>
+        <div class="card c4"><div class="ck">04 / NFLOOKER</div><h4>NFLooker</h4><p>Domain LLM. <code>/explain</code>, <code>/reason</code>, <code>/simulate</code>. Trained on SnapScore SHAP traces.</p></div>
+      </div>
+      <p class="lede" style="margin-top:1em"><strong>SnapScore</strong> learns from history. <strong>SnapForm</strong> adjusts for the present. <strong>SnapPro</strong> turns predictions into decisions. <strong>NFLooker</strong> explains why.</p>
+      <div class="footer-bar"><span class="fb-l">05 · Product surface</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 06 — THE PIPELINE -->
+    <section>
+      <div class="kicker">05 · The pipeline · Six stages, idempotent</div>
+      <h2>Ingest → Validate → Freeze → Features → Harness → Models</h2>
+      <div class="grid-3" style="margin-top:1em">
+        <div class="card c1"><div class="ck">01 / INGEST</div><h4>nflreadpy</h4><p>Pull 27 sources for 2016 → current season. Auto-derives season range from today.</p></div>
+        <div class="card c1"><div class="ck">02 / VALIDATE</div><h4>3-layer</h4><p>Schema drift, coverage invariants, in-season currency. Hard-fails on regression.</p></div>
+        <div class="card c2"><div class="ck">03 / FREEZE</div><h4>Two-tier slice</h4><p>Predicate filtering carves validation (2024 wks 9+) and holdout (2025).</p></div>
+        <div class="card c2"><div class="ck">04 / FEATURES</div><h4>Layer 0 + 1</h4><p>Id-keys + lagged player-game features. M3 adds Layers 2/3/4.</p></div>
+        <div class="card c3"><div class="ck">05 / HARNESS</div><h4>Walk-forward CV</h4><p>Predict (S, W) from (season &lt; S OR week &lt; W). 17 boundary tests.</p></div>
+        <div class="card c3"><div class="ck">06 / MODELS</div><h4>Ridge → XGB</h4><p>Same harness, plug-in models. Target-aware loss.</p></div>
+      </div>
+      <p class="tag" style="margin-top:1em">Every stage idempotent. Every stage refuses to start if upstream stage failed.</p>
+      <div class="footer-bar"><span class="fb-l">06 · The pipeline</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 07 — SOURCE TAXONOMY -->
+    <section>
+      <div class="kicker">06 · Source taxonomy</div>
+      <h2>Four schema kinds. One filter rule each.</h2>
+      <table class="tbl">
+        <thead><tr><th>Kind</th><th>Defining trait</th><th>Filter rule</th></tr></thead>
+        <tbody>
+          <tr><td class="pos">A · Season + Week</td><td>season + week, no game_id</td><td><code>season == X AND (week ≥ min_week OR week IS NULL)</code></td></tr>
+          <tr><td class="pos">B · Season only</td><td>season, no week (annual snapshot)</td><td><code>season == X</code></td></tr>
+          <tr><td class="pos">C · Game-keyed</td><td>nflverse_game_id is authoritative</td><td><code>nflverse_game_id IN slice.game_ids</code></td></tr>
+          <tr><td class="pos">D · Timestamp-keyed</td><td>dt ISO8601 (2025+ depth charts)</td><td><code>dt ∈ [Aug 1 of X, Mar 1 of X+1)</code></td></tr>
+          <tr><td class="pos">Z · All-time</td><td>no season key (reference tables)</td><td>read whole; not slice-able</td></tr>
+        </tbody>
+      </table>
+      <p class="lede" style="margin-top:1em"><strong>The fix that took 5 codex rounds:</strong> the original code built a (season, week) pair set from PBP and inner-joined every Kind A source. PBP 2025 stops at week 22, but NGS has week 0 (preseason) + week 23 (post-SB). Those rows escaped the filter and risked leaking. Predicate-based filtering catches them.</p>
+      <div class="footer-bar"><span class="fb-l">07 · Source taxonomy</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 08 — TWO-TIER EVAL -->
+    <section>
+      <div class="kicker">07 · Two-tier eval</div>
+      <h2>Validation drives the loop. Holdout opens the gate.</h2>
+      <div class="split-2">
+        <div class="sp" style="border-top-color:var(--blue)">
+          <div class="sptag">Validation · loop reads every iteration</div>
+          <h3>2024 weeks 9+</h3>
+          <p>Drives the AutoResearch loop's keep-or-revert decision. 14 walk-forward folds across wks 9-22. Per fold the model trains on everything strictly earlier.</p>
+          <p style="margin-top:.5em"><code>data/validation_2024_w9plus/</code> · 162 games · 28,198 PBP rows</p>
+        </div>
+        <div class="sp" style="border-top-color:var(--gold)">
+          <div class="sptag">Holdout · ship-gate ONLY · NEVER in loop</div>
+          <h3>2025 entire season</h3>
+          <p>The sacred ship-gate. Belt + suspenders: <code>run_baseline.py</code> drops 2025 BEFORE the harness; <code>walk_forward_splits</code> filters again; <code>holdout_seasons</code> enforced by both split flavors.</p>
+          <p style="margin-top:.5em"><code>data/holdout_2025/</code> · 285 games · 48,771 PBP rows · 517,851 depth-chart events</p>
+        </div>
+      </div>
+      <div class="footer-bar"><span class="fb-l">08 · Two-tier eval</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 09 — WALK-FORWARD HARNESS -->
+    <section>
+      <div class="kicker">08 · Walk-forward harness</div>
+      <h2>The contract: predict at <em>(S, W)</em> reads only data from <em>before</em> (S, W).</h2>
+      <p class="lede">Every row in the train fold satisfies <code>(season &lt; S) OR (season == S AND week &lt; W)</code>. Imputer + scaler fit per fold; no global statistics leak across folds. <strong>17 boundary tests pin this contract</strong> via synthetic frames.</p>
+      <ul class="principle-list" style="margin-top:1em">
+        <li><strong>train never contains target week</strong> · pinned</li>
+        <li><strong>train never contains future seasons</strong> · pinned</li>
+        <li><strong>train never contains future weeks of same season</strong> · pinned</li>
+        <li><strong>holdout_seasons excluded from train AND predict</strong> · pinned</li>
+        <li><strong>leakage gate fires at split-time before any fit</strong> · pinned</li>
+        <li><strong>train sizes monotonically grow fold-over-fold</strong> · pinned</li>
+      </ul>
+      <div class="footer-bar"><span class="fb-l">09 · Walk-forward harness</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 10 — ANTI-LEAKAGE -->
+    <section>
+      <div class="kicker">09 · Live vs training surface</div>
+      <h2>Some columns are <em>training-only</em>. The validator enforces it.</h2>
+      <div class="split-2" style="margin-top:.5em">
+        <div class="sp allow">
+          <div class="sptag">ALLOWED LIVE</div>
+          <h3>Released ≤ 24h post-game or known pre-kickoff</h3>
+          <div class="clist">
+            avg_time_to_throw<br>aggressiveness<br>CPOE<br>avg_separation<br>RYOE<br>avg_yac_above_expectation<br>pfr_advstats_week_*<br>schedules + Vegas<br>pbp pre-kickoff<br>player_stats lagged<br>snap_counts lagged<br>rosters_weekly
+          </div>
+        </div>
+        <div class="sp block">
+          <div class="sptag">FORBIDDEN LIVE · participation backfill</div>
+          <h3>Three block-list surfaces</h3>
+          <div class="clist">
+            was_pressure<br>route<br>defense_coverage_type<br>defense_man_zone_type<br>ngs_air_yards<br>time_to_throw (per-play)<br>n_pass_rushers<br>n_offense / n_defense<br>defenders_in_box<br>offense_personnel<br>defense_personnel<br>offense_formation<br>epa / wpa / qb_epa<br>yards_gained / play_type<br>complete_pass / fumble<br>temp / wind<br>head_official<br>series_result<br>fixed_drive_result
+          </div>
+        </div>
+      </div>
+      <p class="tag" style="margin-top:1em">@realfrankbrank 2025-09-02: "we will backfill each year at the end of the regular season." 2025 lands ~Feb 2026 post-Super-Bowl.</p>
+      <div class="footer-bar"><span class="fb-l">10 · Live vs training</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 11 — M2 RESULTS -->
+    <section>
+      <div class="kicker">10 · M2 baseline · honest unfiltered cohort</div>
+      <h2>Numbers, not narratives.</h2>
+      <table class="tbl">
+        <thead><tr><th>Position × Target</th><th style="text-align:right">n</th><th style="text-align:right">Ridge MAE</th><th style="text-align:right">XGB MAE</th><th style="text-align:right">Δ MAE %</th><th>Winner</th></tr></thead>
+        <tbody>
+          <tr><td class="pos">QB × passing_yards</td><td class="num">395</td><td class="num">67.05</td><td class="num">64.54</td><td class="num">−3.74%</td><td class="winner">XGB</td></tr>
+          <tr><td class="pos">QB × passing_tds</td><td class="num">395</td><td class="num">0.86</td><td class="num">0.85</td><td class="num">−0.95%</td><td class="winner">XGB</td></tr>
+          <tr><td class="pos">RB × rushing_yards</td><td class="num">906</td><td class="num">19.79</td><td class="num">19.92</td><td class="num">+0.64%</td><td class="winner">Ridge</td></tr>
+          <tr><td class="pos">RB × rushing_tds</td><td class="num">906</td><td class="num">0.34</td><td class="num">0.34</td><td class="num">−0.84%</td><td class="winner tie">≈ tie</td></tr>
+          <tr><td class="pos">WR × receiving_yards</td><td class="num">1,457</td><td class="num">20.92</td><td class="num">20.76</td><td class="num">−0.74%</td><td class="winner">XGB</td></tr>
+          <tr><td class="pos">WR × receiving_tds</td><td class="num">1,457</td><td class="num">0.32</td><td class="num">0.32</td><td class="num">−0.03%</td><td class="winner tie">≈ tie</td></tr>
+          <tr><td class="pos">TE × receiving_yards</td><td class="num">734</td><td class="num">15.39</td><td class="num">15.41</td><td class="num">+0.12%</td><td class="winner tie">≈ tie</td></tr>
+          <tr><td class="pos">TE × receiving_tds</td><td class="num">734</td><td class="num">0.27</td><td class="num">0.27</td><td class="num">−0.51%</td><td class="winner tie">≈ tie</td></tr>
+        </tbody>
+      </table>
+      <p class="tag" style="margin-top:1em">14 walk-forward folds across 2024 wks 9-22. XGB target-aware: <code>reg:squarederror</code> for yards, <code>count:poisson</code> for TDs.</p>
+      <div class="footer-bar"><span class="fb-l">11 · M2 results</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 12 — THE LESSON -->
+    <section>
+      <div class="kicker">11 · The lesson</div>
+      <blockquote class="bigquote">Both models were squeezing the same juice. With 19 features (lagged versions of six source columns), there was almost no non-linear interaction for trees to exploit. The bottleneck wasn't model class. It was <em>feature surface</em>.<span class="cite">— Internal post-M2 review</span></blockquote>
+      <p class="lede">M3 adds opponent quality (defensive EPA allowed), Vegas implied team totals, NGS weekly aggregates (separation, RYOE, CPOE, avg_time_to_throw), and Adam's live injury feed. <strong>Then XGB pulls ahead substantially.</strong></p>
+      <div class="footer-bar"><span class="fb-l">12 · The lesson</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 13 — ROADMAP -->
+    <section>
+      <div class="kicker">12 · Roadmap · Tagged in git, dated to the day</div>
+      <h2>Greenfield to baseline in <em>24 hours</em>.</h2>
+      <div class="tline">
+        <div class="tline-step done"><div class="ts-id">M0</div><div class="ts-icon"></div><div class="ts-name">Data layer</div><div class="ts-desc">27 sources · 3-layer validator · two-tier eval · architecture spec.</div></div>
+        <div class="tline-step done"><div class="ts-id">M1</div><div class="ts-icon"></div><div class="ts-name">Eval harness</div><div class="ts-desc">Walk-forward CV · anti-leakage gate · Ridge baseline · first projection_error.</div></div>
+        <div class="tline-step done"><div class="ts-id">M2</div><div class="ts-icon"></div><div class="ts-name">XGBoost</div><div class="ts-desc">Same harness · target-aware loss · Ridge ↔ XGB comparison.</div></div>
+        <div class="tline-step now"><div class="ts-id">M3</div><div class="ts-icon"></div><div class="ts-name">Layers 2/3/4</div><div class="ts-desc">EPA + CPOE · NGS weekly · opponent quality · Vegas lines.</div></div>
+        <div class="tline-step"><div class="ts-id">M_serve</div><div class="ts-icon"></div><div class="ts-name">Live snapshot</div><div class="ts-desc">Per-game point-in-time · max-staleness contract per source.</div></div>
+        <div class="tline-step"><div class="ts-id">M_inf</div><div class="ts-icon"></div><div class="ts-name">Spatiotemporal</div><div class="ts-desc">Big Data Bowl tracking · GNN/RNN · keep iff harness improves.</div></div>
+      </div>
+      <div class="footer-bar"><span class="fb-l">13 · Roadmap</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 14 — ENGINEERING PRINCIPLES -->
+    <section>
+      <div class="kicker">13 · Engineering principles</div>
+      <h2>The boring stuff that makes the predictions trustworthy.</h2>
+      <ul class="principle-list">
+        <li><strong>Anti-leakage at split-time.</strong> Validator runs before any fit. 16 tests pin the block list against the actual <code>participation.parquet</code> schema.</li>
+        <li><strong>Schema-drift validator.</strong> Every ingest diffs against a committed baseline. Bad nflverse releases can't slip through to modeling.</li>
+        <li><strong>Walk-forward correctness.</strong> Fresh imputer + scaler per fold. No global statistics leak. 17 boundary tests.</li>
+        <li><strong>Independent codex audits.</strong> Every milestone reviewed by a different LLM with adversarial intent. CRITICAL/HIGH closed before tag.</li>
+        <li><strong>Tagged commits.</strong> <code>m0-complete</code> · <code>m1-baseline</code> · <code>m1-codex-pass</code> · <code>m2-xgboost</code>. Reproducible from any tag.</li>
+        <li><strong>The modeling lane doesn't self-approve.</strong> Ever.</li>
+      </ul>
+      <div class="footer-bar"><span class="fb-l">14 · Principles</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 15 — LIVE SNAPSHOT CONTRACT -->
+    <section>
+      <div class="kicker">14 · Live snapshot contract · M_serve scope</div>
+      <h2>Per-source max-staleness, enforced at predict time.</h2>
+      <p class="lede">Pre-kickoff inputs (current injuries, depth charts, Vegas lines, weather forecast, inactives) are moving targets. Every prediction binds to a single <code>(target_game_id, as_of_ts)</code> tuple.</p>
+      <table class="tbl">
+        <thead><tr><th>Source</th><th>Provider</th><th style="text-align:right">max_staleness</th></tr></thead>
+        <tbody>
+          <tr><td class="pos">injuries</td><td>Adam's ESPN/PFR scrape</td><td class="num" style="color:var(--gold)">4h</td></tr>
+          <tr><td class="pos">depth_charts</td><td>nflverse depth_charts_timestamped</td><td class="num">24h</td></tr>
+          <tr><td class="pos">vegas_lines</td><td>Sportsbook API</td><td class="num" style="color:var(--gold)">1h</td></tr>
+          <tr><td class="pos">weather_forecast</td><td>NWS / Tomorrow.io</td><td class="num">6h</td></tr>
+          <tr><td class="pos">inactives</td><td>NFL inactives feed (T-90min)</td><td class="num" style="color:var(--gold)">1.5h</td></tr>
+          <tr><td class="pos">pbp_lagged / ngs_lagged</td><td>nflverse</td><td class="num">48h</td></tr>
+        </tbody>
+      </table>
+      <p class="tag" style="margin-top:1em">A snapshot is <strong>valid</strong> iff every source's actual_staleness ≤ max_staleness. Otherwise <code>POST /api/snapscore/predict</code> returns 503.</p>
+      <div class="footer-bar"><span class="fb-l">15 · Live snapshot contract</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 16 — CODEX AUDIT STORY -->
+    <section>
+      <div class="kicker">15 · Independent review · Codex audit rounds</div>
+      <h2>Five rounds. Twenty-plus findings. <em>Zero</em> shipped without resolution.</h2>
+      <div class="grid-3" style="margin-top:1em">
+        <div class="card c1"><div class="ck">M0 · 5 rounds</div><h4>Data layer</h4><p>CRITICAL: pair-set leak (NGS wk 0/23 + officials wk 23). HIGH: stale manifest, missing schema validator. All closed.</p></div>
+        <div class="card c2"><div class="ck">M1 · 1 round</div><h4>Eval harness</h4><p>CRITICAL: leakage block-list excluded play_id + nflverse_game_id. HIGH: label-based selection bias from min_target_value. All closed.</p></div>
+        <div class="card c3"><div class="ck">M2 · 1 round (PASS)</div><h4>XGBoost</h4><p>Verified: target dispatch, fold isolation, Poisson non-negativity, no silent train-mean prediction. Comparison numbers match. PASS gate.</p></div>
+      </div>
+      <p class="lede" style="margin-top:1em"><strong>The modeling lane doesn't self-approve.</strong> Every milestone gets reviewed by a different LLM (OpenAI codex) with adversarial intent. Every CRITICAL/HIGH finding closes before tag. Process is the moat.</p>
+      <div class="footer-bar"><span class="fb-l">16 · Codex audits</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 17 — THE BIG NUMBER -->
+    <section>
+      <div class="kicker">16 · One number</div>
+      <div class="bigcall">
+        <div class="bc-n">24h</div>
+        <div class="bc-l">Greenfield → tagged baseline · M0 + M1 + M2</div>
+      </div>
+      <p class="lede" style="text-align:center;max-width:780px;margin:0 auto">Three milestones. Five codex review rounds. A working harness that recorded the first projection_error on all 8 player-level targets. Independent audits at every tag.</p>
+      <p class="lede" style="text-align:center;margin-top:1em"><strong>Multi-agent orchestration at full velocity, with no broken windows.</strong></p>
+      <div class="footer-bar"><span class="fb-l">17 · The big number</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+    <!-- 18 — CTA -->
+    <section>
+      <div class="kicker">17 · What's next</div>
+      <h1>Snapcount is <em>shipping</em>.</h1>
+      <p class="lede" style="margin-top:1em">M3 unlocks the feature surface. M_serve formalizes the live-snapshot contract. M_inf adds spatiotemporal once Big Data Bowl lands. Production prediction is the back half of 2026.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/">Read the overview →</a>
+        <a class="btn btn-ghost" href="/architecture.html">See the architecture →</a>
+        <a class="btn btn-ghost" href="/story.html">Read the story →</a>
+        <a class="btn btn-ghost" href="https://github.com/thetangstr/tokyo-v2" target="_blank">GitHub →</a>
+      </div>
+      <p class="tag" style="margin-top:2em">snapcount.ai · multi-agent NFL prediction · greenfield 2026 · m2-xgboost · 33/33 tests · 5 codex rounds</p>
+      <div class="footer-bar"><span class="fb-l">18 · End</span><span>snapcount.ai/slides</span></div>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  slideNumber: 'c/t',
+  controls: true,
+  progress: true,
+  transition: 'slide',
+  backgroundTransition: 'fade',
+  width: 1400,
+  height: 900,
+  margin: 0.04,
+  minScale: 0.4,
+  maxScale: 1.6,
+});
+</script>
+</body>
+</html>
