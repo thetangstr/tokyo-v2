@@ -76,7 +76,7 @@
 .tbl .winner.tie{color:var(--muted)}
 
 /* timeline (roadmap) */
-.tline{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin-top:1em;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;overflow:hidden}
+.tline{display:grid;grid-template-columns:repeat(7,1fr);gap:0;margin-top:1em;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;overflow:hidden}
 .tline-step{padding:1rem .85rem;border-right:1px solid var(--chrome-border);text-align:center;background:var(--chrome);font-size:.55em !important}
 .tline-step:last-child{border-right:none}
 .tline-step .ts-id{font-family:'JetBrains Mono',monospace;font-size:.95em;font-weight:700;letter-spacing:.1em;color:var(--muted)}
@@ -150,7 +150,7 @@
       <div class="cta-row" style="margin-top:2em">
         <span class="tag">Press SPACE to advance · ESC for overview</span>
       </div>
-      <div class="footer-bar"><span class="fb-l"><a href="/">snapcount.ai</a></span><span>m2-xgboost · 33/33 tests · 5 codex rounds</span></div>
+      <div class="footer-bar"><span class="fb-l"><a href="/">snapcount.ai</a></span><span>m4-features · 81/81 tests · 9 codex rounds</span></div>
     </section>
 
     <!-- 02 — THE CLAIM -->
@@ -184,8 +184,8 @@
         <div class="ss"><div class="ssn">27</div><div class="ssl">nflverse sources<br>2016 → 2025</div></div>
         <div class="ss"><div class="ssn">484K</div><div class="ssl">plays analyzed<br>372 cols deep</div></div>
         <div class="ss"><div class="ssn">8</div><div class="ssl">player targets<br>baselined</div></div>
-        <div class="ss"><div class="ssn">33/33</div><div class="ssl">anti-leakage tests<br>passing</div></div>
-        <div class="ss"><div class="ssn">5</div><div class="ssl">codex audit rounds<br>passed</div></div>
+        <div class="ss"><div class="ssn">81/81</div><div class="ssl">tests<br>passing</div></div>
+        <div class="ss"><div class="ssn">9</div><div class="ssl">codex audit rounds<br>passed</div></div>
       </div>
       <div class="footer-bar"><span class="fb-l">04 · In one sentence</span><span>snapcount.ai/slides</span></div>
     </section>
@@ -301,22 +301,22 @@
 
     <!-- 11 — M2 RESULTS -->
     <section>
-      <div class="kicker">10 · M2 baseline · honest unfiltered cohort</div>
+      <div class="kicker">10 · M4 baseline · honest unfiltered cohort</div>
       <h2>Numbers, not narratives.</h2>
       <table class="tbl">
-        <thead><tr><th>Position × Target</th><th style="text-align:right">n</th><th style="text-align:right">Ridge MAE</th><th style="text-align:right">XGB MAE</th><th style="text-align:right">Δ MAE %</th><th>Winner</th></tr></thead>
+        <thead><tr><th>Position × Target</th><th style="text-align:right">n</th><th style="text-align:right">M1 Ridge<br>(lagged)</th><th style="text-align:right">M3 XGB<br>(+EPA/NGS)</th><th style="text-align:right"><strong>M4 XGB</strong></th><th style="text-align:right">M1→M4 Δ</th></tr></thead>
         <tbody>
-          <tr><td class="pos">QB × passing_yards</td><td class="num">395</td><td class="num">67.05</td><td class="num">64.54</td><td class="num">−3.74%</td><td class="winner">XGB</td></tr>
-          <tr><td class="pos">QB × passing_tds</td><td class="num">395</td><td class="num">0.86</td><td class="num">0.85</td><td class="num">−0.95%</td><td class="winner">XGB</td></tr>
-          <tr><td class="pos">RB × rushing_yards</td><td class="num">906</td><td class="num">19.79</td><td class="num">19.92</td><td class="num">+0.64%</td><td class="winner">Ridge</td></tr>
-          <tr><td class="pos">RB × rushing_tds</td><td class="num">906</td><td class="num">0.34</td><td class="num">0.34</td><td class="num">−0.84%</td><td class="winner tie">≈ tie</td></tr>
-          <tr><td class="pos">WR × receiving_yards</td><td class="num">1,457</td><td class="num">20.92</td><td class="num">20.76</td><td class="num">−0.74%</td><td class="winner">XGB</td></tr>
-          <tr><td class="pos">WR × receiving_tds</td><td class="num">1,457</td><td class="num">0.32</td><td class="num">0.32</td><td class="num">−0.03%</td><td class="winner tie">≈ tie</td></tr>
-          <tr><td class="pos">TE × receiving_yards</td><td class="num">734</td><td class="num">15.39</td><td class="num">15.41</td><td class="num">+0.12%</td><td class="winner tie">≈ tie</td></tr>
-          <tr><td class="pos">TE × receiving_tds</td><td class="num">734</td><td class="num">0.27</td><td class="num">0.27</td><td class="num">−0.51%</td><td class="winner tie">≈ tie</td></tr>
+          <tr><td class="pos">QB × passing_yards</td><td class="num">395</td><td class="num">67.05</td><td class="num">51.75</td><td class="num"><strong>51.35</strong></td><td class="winner">−23.4%</td></tr>
+          <tr><td class="pos">QB × passing_tds</td><td class="num">395</td><td class="num">0.86</td><td class="num">0.78</td><td class="num"><strong>0.78</strong></td><td class="winner">−9.3%</td></tr>
+          <tr><td class="pos">RB × rushing_yards</td><td class="num">906</td><td class="num">19.79</td><td class="num">15.03</td><td class="num"><strong>14.99</strong></td><td class="winner">−24.3%</td></tr>
+          <tr><td class="pos">RB × rushing_tds</td><td class="num">906</td><td class="num">0.34</td><td class="num">0.31</td><td class="num"><strong>0.31</strong></td><td class="winner">−9.7%</td></tr>
+          <tr><td class="pos">WR × receiving_yards</td><td class="num">1,457</td><td class="num">20.92</td><td class="num">17.13</td><td class="num"><strong>17.10</strong></td><td class="winner">−18.3%</td></tr>
+          <tr><td class="pos">WR × receiving_tds</td><td class="num">1,457</td><td class="num">0.32</td><td class="num">0.31</td><td class="num"><strong>0.31</strong></td><td class="winner">−5.0%</td></tr>
+          <tr><td class="pos">TE × receiving_yards</td><td class="num">734</td><td class="num">15.39</td><td class="num">12.39</td><td class="num"><strong>12.49</strong></td><td class="winner">−18.8%</td></tr>
+          <tr><td class="pos">TE × receiving_tds</td><td class="num">734</td><td class="num">0.27</td><td class="num">0.26</td><td class="num"><strong>0.25</strong></td><td class="winner">−6.7%</td></tr>
         </tbody>
       </table>
-      <p class="tag" style="margin-top:1em">14 walk-forward folds across 2024 wks 9-22. XGB target-aware: <code>reg:squarederror</code> for yards, <code>count:poisson</code> for TDs.</p>
+      <p class="tag" style="margin-top:1em">14 walk-forward folds across 2024 wks 9-22. XGB target-aware: <code>reg:squarederror</code> for yards, <code>count:poisson</code> for TDs. M4 = M3 + Layer 5 player attrs.</p>
       <div class="footer-bar"><span class="fb-l">11 · M2 results</span><span>snapcount.ai/slides</span></div>
     </section>
 
@@ -333,11 +333,13 @@
       <div class="kicker">12 · Roadmap · Tagged in git, dated to the day</div>
       <h2>Greenfield to baseline in <em>24 hours</em>.</h2>
       <div class="tline">
-        <div class="tline-step done"><div class="ts-id">M0</div><div class="ts-icon"></div><div class="ts-name">Data layer</div><div class="ts-desc">27 sources · 3-layer validator · two-tier eval · architecture spec.</div></div>
-        <div class="tline-step done"><div class="ts-id">M1</div><div class="ts-icon"></div><div class="ts-name">Eval harness</div><div class="ts-desc">Walk-forward CV · anti-leakage gate · Ridge baseline · first projection_error.</div></div>
-        <div class="tline-step done"><div class="ts-id">M2</div><div class="ts-icon"></div><div class="ts-name">XGBoost</div><div class="ts-desc">Same harness · target-aware loss · Ridge ↔ XGB comparison.</div></div>
-        <div class="tline-step now"><div class="ts-id">M3</div><div class="ts-icon"></div><div class="ts-name">Layers 2/3/4</div><div class="ts-desc">EPA + CPOE · NGS weekly · opponent quality · Vegas lines.</div></div>
-        <div class="tline-step"><div class="ts-id">M_serve</div><div class="ts-icon"></div><div class="ts-name">Live snapshot</div><div class="ts-desc">Per-game point-in-time · max-staleness contract per source.</div></div>
+        <div class="tline-step done"><div class="ts-id">M0</div><div class="ts-icon"></div><div class="ts-name">Data layer</div><div class="ts-desc">27 sources · 3-layer validator · two-tier eval.</div></div>
+        <div class="tline-step done"><div class="ts-id">M1</div><div class="ts-icon"></div><div class="ts-name">Eval harness</div><div class="ts-desc">Walk-forward CV · anti-leakage · Ridge baseline.</div></div>
+        <div class="tline-step done"><div class="ts-id">M2</div><div class="ts-icon"></div><div class="ts-name">XGBoost</div><div class="ts-desc">Same harness · target-aware loss · tiny gain vs Ridge.</div></div>
+        <div class="tline-step done"><div class="ts-id">M3</div><div class="ts-icon"></div><div class="ts-name">EPA+NGS+opp</div><div class="ts-desc">Layer 2/3/4 features · <strong>XGB pulls ahead 17-25%</strong>.</div></div>
+        <div class="tline-step done"><div class="ts-id">M4</div><div class="ts-icon"></div><div class="ts-name">Player attrs<br>+ SnapForm v1</div><div class="ts-desc">Static player feats + injury/weather/form formulas.</div></div>
+        <div class="tline-step now"><div class="ts-id">M5</div><div class="ts-icon"></div><div class="ts-name">Ensembles +<br>embeddings</div><div class="ts-desc">Linear+tree ensemble · QB/team/coach embeddings.</div></div>
+        <div class="tline-step"><div class="ts-id">M_serve</div><div class="ts-icon"></div><div class="ts-name">Live snapshot</div><div class="ts-desc">Point-in-time API · max-staleness per source.</div></div>
         <div class="tline-step"><div class="ts-id">M_inf</div><div class="ts-icon"></div><div class="ts-name">Spatiotemporal</div><div class="ts-desc">Big Data Bowl tracking · GNN/RNN · keep iff harness improves.</div></div>
       </div>
       <div class="footer-bar"><span class="fb-l">13 · Roadmap</span><span>snapcount.ai/slides</span></div>
@@ -352,7 +354,7 @@
         <li><strong>Schema-drift validator.</strong> Every ingest diffs against a committed baseline. Bad nflverse releases can't slip through to modeling.</li>
         <li><strong>Walk-forward correctness.</strong> Fresh imputer + scaler per fold. No global statistics leak. 17 boundary tests.</li>
         <li><strong>Independent codex audits.</strong> Every milestone reviewed by a different LLM with adversarial intent. CRITICAL/HIGH closed before tag.</li>
-        <li><strong>Tagged commits.</strong> <code>m0-complete</code> · <code>m1-baseline</code> · <code>m1-codex-pass</code> · <code>m2-xgboost</code>. Reproducible from any tag.</li>
+        <li><strong>Tagged commits.</strong> <code>m0-complete</code> · <code>m1-codex-pass</code> · <code>m2-xgboost</code> · <code>m3-codex-pass</code> · <code>m4-features</code>. Reproducible from any tag.</li>
         <li><strong>The modeling lane doesn't self-approve.</strong> Ever.</li>
       </ul>
       <div class="footer-bar"><span class="fb-l">14 · Principles</span><span>snapcount.ai/slides</span></div>
@@ -381,11 +383,12 @@
     <!-- 16 — CODEX AUDIT STORY -->
     <section>
       <div class="kicker">15 · Independent review · Codex audit rounds</div>
-      <h2>Five rounds. Twenty-plus findings. <em>Zero</em> shipped without resolution.</h2>
-      <div class="grid-3" style="margin-top:1em">
+      <h2>Nine rounds. Thirty-plus findings. <em>Zero</em> shipped without resolution.</h2>
+      <div class="grid-4" style="margin-top:1em">
         <div class="card c1"><div class="ck">M0 · 5 rounds</div><h4>Data layer</h4><p>CRITICAL: pair-set leak (NGS wk 0/23 + officials wk 23). HIGH: stale manifest, missing schema validator. All closed.</p></div>
-        <div class="card c2"><div class="ck">M1 · 1 round</div><h4>Eval harness</h4><p>CRITICAL: leakage block-list excluded play_id + nflverse_game_id. HIGH: label-based selection bias from min_target_value. All closed.</p></div>
-        <div class="card c3"><div class="ck">M2 · 1 round (PASS)</div><h4>XGBoost</h4><p>Verified: target dispatch, fold isolation, Poisson non-negativity, no silent train-mean prediction. Comparison numbers match. PASS gate.</p></div>
+        <div class="card c2"><div class="ck">M1 · 1 round</div><h4>Eval harness</h4><p>CRITICAL: leakage block-list excluded play_id + nflverse_game_id. HIGH: label-based selection bias. Closed.</p></div>
+        <div class="card c3"><div class="ck">M2 · 1 round (PASS)</div><h4>XGBoost</h4><p>Verified: target dispatch, fold isolation, Poisson non-negativity, no silent train-mean. PASS gate.</p></div>
+        <div class="card c4"><div class="ck">M3 · 2 rounds (PASS)</div><h4>Features</h4><p>CRITICAL: NGS wk=0 same-season aggregate leak (caught a 24% MAE inflation). All closed. Layer tests added.</p></div>
       </div>
       <p class="lede" style="margin-top:1em"><strong>The modeling lane doesn't self-approve.</strong> Every milestone gets reviewed by a different LLM (OpenAI codex) with adversarial intent. Every CRITICAL/HIGH finding closes before tag. Process is the moat.</p>
       <div class="footer-bar"><span class="fb-l">16 · Codex audits</span><span>snapcount.ai/slides</span></div>
@@ -414,7 +417,7 @@
         <a class="btn btn-ghost" href="/story.html">Read the story →</a>
         <a class="btn btn-ghost" href="https://github.com/thetangstr/tokyo-v2" target="_blank">GitHub →</a>
       </div>
-      <p class="tag" style="margin-top:2em">snapcount.ai · multi-agent NFL prediction · greenfield 2026 · m2-xgboost · 33/33 tests · 5 codex rounds</p>
+      <p class="tag" style="margin-top:2em">snapcount.ai · multi-agent NFL prediction · greenfield 2026 · m4-features · 81/81 tests · 9 codex rounds</p>
       <div class="footer-bar"><span class="fb-l">18 · End</span><span>snapcount.ai/slides</span></div>
     </section>
 
