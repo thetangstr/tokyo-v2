@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PFF — The Machine That Calls Plays</title>
+<title>Snapcount — The Multi-Agent Engine for NFL Prediction</title>
+<meta name="description" content="Snapcount turns 484,254 plays of NFL data into per-player projections, calibrated correlations, and explanations you can read in plain English. Multi-agent. Walk-forward verified. 2025 quarantined.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;700&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
@@ -12,1753 +13,419 @@
 :root{
   --bg:#0a0e14;--chrome:#141821;--chrome-2:#1a1e28;--chrome-border:#252a38;
   --gold:#c49000;--gold-bright:#e6b030;
-  --live:#e53935;--blue:#60a0ff;--green:#4caf50;
+  --live:#e53935;--blue:#60a0ff;--green:#4caf50;--purple:#a060ff;
   --bright:#f0f2f5;--text:#b8bcc6;--muted:#5a6070;
-  --chalk:#e8e4d0;--chalk-dim:rgba(232,228,208,0.4);
-  --whiteboard:#0e1320;
 }
 html{scroll-behavior:smooth}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 
-/* ========== NAV ========== */
 nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 1.5rem;background:rgba(10,14,20,.85);backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-color .3s}
 nav.scrolled{border-bottom-color:var(--chrome-border)}
-.nav-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:52px}
-.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;color:var(--bright);letter-spacing:-.02em}
+.nav-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:1.05rem;color:var(--bright);letter-spacing:-.02em;text-decoration:none}
 .logo span{color:var(--gold)}
-.nav-links{display:flex;gap:1.5rem;list-style:none}
-.nav-links a{color:var(--muted);text-decoration:none;font-size:.75rem;font-weight:500;letter-spacing:.03em;transition:color .2s}
-.nav-links a:hover{color:var(--bright)}
+.nav-links{display:flex;gap:1.5rem;list-style:none;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.78rem;font-weight:500;letter-spacing:.03em;transition:color .2s}
+.nav-links a:hover,.nav-links a.current{color:var(--bright)}
+.nav-links a.cta{color:var(--gold);border:1px solid var(--gold);padding:.4rem .85rem;border-radius:3px;transition:all .2s}
+.nav-links a.cta:hover{background:var(--gold);color:var(--bg)}
 
-/* ========== SECTION 1: HERO / OVERVIEW ========== */
-.overview{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:7rem 2rem 4rem;max-width:1280px;margin:0 auto;position:relative}
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:7rem 2rem 4rem;max-width:1280px;margin:0 auto;position:relative}
 .kicker{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:1.5rem}
-.overview h1{font-family:'Sora',sans-serif;font-size:clamp(2.5rem,5.5vw,4.5rem);font-weight:800;letter-spacing:-.04em;line-height:1.04;color:var(--bright);margin-bottom:1.5rem;max-width:900px}
-.overview h1 em{font-style:normal;color:var(--gold);font-weight:700}
-.overview-sub{font-size:1.1rem;color:var(--text);max-width:680px;line-height:1.7;margin-bottom:4rem}
-.overview-sub strong{color:var(--bright);font-weight:600}
+.kicker .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-right:.6rem;animation:pulse 2s ease infinite;vertical-align:middle}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.hero h1{font-family:'Sora',sans-serif;font-size:clamp(2.5rem,6vw,5rem);font-weight:800;letter-spacing:-.04em;line-height:1.02;color:var(--bright);margin-bottom:1.75rem;max-width:900px}
+.hero h1 em{font-style:normal;color:var(--gold);font-weight:700}
+.hero h1 .strike{text-decoration:line-through;text-decoration-color:var(--muted);text-decoration-thickness:2px;color:var(--muted)}
+.hero-sub{font-size:1.15rem;color:var(--text);max-width:720px;line-height:1.7;margin-bottom:3.5rem}
+.hero-sub strong{color:var(--bright);font-weight:600}
 
-.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:3rem}
-.pillar{background:var(--chrome);border:1px solid var(--chrome-border);border-radius:6px;padding:1.75rem 1.5rem;position:relative;overflow:hidden;transition:border-color .3s}
-.pillar:hover{border-color:var(--gold)}
-.pillar-index{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.08em;margin-bottom:.6rem}
-.pillar-title{font-family:'Sora',sans-serif;font-size:1.2rem;font-weight:700;color:var(--bright);margin-bottom:.5rem;letter-spacing:-.02em}
-.pillar-title .accent{font-size:1.1rem}
-.pillar-viz{height:80px;margin:1rem 0;position:relative}
-.pillar-viz svg{width:100%;height:100%}
-.pillar-body{font-size:.85rem;color:var(--text);line-height:1.6;margin-bottom:.75rem}
-.pillar-stat{display:flex;gap:1.25rem;padding-top:.75rem;border-top:1px dashed var(--chrome-border)}
-.pillar-stat .ps-n{font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--gold);letter-spacing:-.02em}
-.pillar-stat .ps-l{font-size:.65rem;color:var(--muted);line-height:1.3;margin-top:.1rem}
-.pillar.p1{border-top:2px solid var(--green)}
-.pillar.p2{border-top:2px solid var(--blue)}
-.pillar.p3{border-top:2px solid var(--gold)}
+.hero-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:3rem;max-width:980px}
+.hs{padding:1rem 1.1rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;border-left:2px solid var(--gold)}
+.hs-n{font-family:'Sora',sans-serif;font-size:1.6rem;font-weight:700;color:var(--bright);letter-spacing:-.02em;line-height:1}
+.hs-l{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:.5rem;line-height:1.3}
 
-.flow-arrow{display:flex;align-items:center;justify-content:center;gap:.75rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;padding:1rem 0}
-.flow-arrow::before,.flow-arrow::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,var(--chrome-border),transparent);max-width:200px}
-.scroll-hint{text-align:center;margin-top:2rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase}
+.hero-cta{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.85rem 1.5rem;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;letter-spacing:.02em;text-decoration:none;border-radius:3px;transition:all .2s;border:1px solid transparent}
+.btn-primary{background:var(--gold);color:var(--bg)}
+.btn-primary:hover{background:var(--gold-bright)}
+.btn-ghost{color:var(--text);border-color:var(--chrome-border)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--bright)}
+
+.scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase}
 .scroll-hint .arrow{display:block;margin:.5rem auto 0;width:1px;height:30px;background:linear-gradient(to bottom,var(--gold),transparent);animation:pulse 2s ease infinite}
-@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
 
-/* ========== SECTION 2: LIVE DEMO ========== */
-.demo{padding:4rem 2rem 6rem;max-width:1400px;margin:0 auto}
-.demo-header{text-align:center;margin-bottom:2.5rem}
-.demo-header h2{font-family:'Sora',sans-serif;font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:700;color:var(--bright);letter-spacing:-.03em;margin-bottom:.5rem}
-.demo-header p{font-size:.95rem;color:var(--muted);max-width:580px;margin:0 auto}
+section.s{padding:6rem 2rem;max-width:1280px;margin:0 auto;position:relative}
+.s-head{text-align:center;margin-bottom:4rem}
+.s-head .kicker{margin-bottom:1rem}
+.s-head h2{font-family:'Sora',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:700;color:var(--bright);letter-spacing:-.03em;margin-bottom:1rem;line-height:1.1}
+.s-head p{font-size:1.05rem;color:var(--text);max-width:680px;margin:0 auto;line-height:1.65}
 
-/* Data feeds bar */
-.data-feeds{display:flex;gap:.5rem;align-items:center;justify-content:center;padding:.75rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;margin-bottom:1rem;flex-wrap:wrap}
-.feed-label{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding-right:.75rem;border-right:1px solid var(--chrome-border);margin-right:.25rem}
-.feed-pill{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .7rem;background:var(--bg);border:1px solid var(--chrome-border);border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--text);letter-spacing:.03em}
-.feed-pill .fp-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:feedPulse 2s ease infinite}
-.feed-pill:nth-child(3) .fp-dot{animation-delay:.3s}
-.feed-pill:nth-child(4) .fp-dot{animation-delay:.6s}
-.feed-pill:nth-child(5) .fp-dot{animation-delay:.9s}
-.feed-pill:nth-child(6) .fp-dot{animation-delay:1.2s}
-.feed-pill:nth-child(7) .fp-dot{animation-delay:1.5s}
-@keyframes feedPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(76,175,80,.4)}50%{opacity:.6;box-shadow:0 0 0 3px rgba(76,175,80,0)}}
+.products{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.product{background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;padding:1.75rem;transition:all .3s;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.product:hover{border-color:var(--gold);transform:translateY(-2px)}
+.product::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent,var(--gold))}
+.product.p1{--accent:var(--green)}
+.product.p2{--accent:var(--blue)}
+.product.p3{--accent:var(--gold)}
+.product.p4{--accent:var(--purple)}
+.product-idx{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.1em;margin-bottom:.6rem}
+.product-name{font-family:'Sora',sans-serif;font-size:1.4rem;font-weight:700;color:var(--bright);margin-bottom:.25rem;letter-spacing:-.02em}
+.product-tag{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--accent,var(--gold));letter-spacing:.06em;text-transform:uppercase;margin-bottom:1rem}
+.product-body{font-size:.9rem;color:var(--text);line-height:1.6;flex:1;margin-bottom:1.25rem}
+.product-meta{display:flex;justify-content:space-between;padding-top:1rem;border-top:1px dashed var(--chrome-border);font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.04em}
+.product-meta strong{color:var(--text);font-weight:600}
 
-/* Score bar */
-.score-bar{display:flex;align-items:center;justify-content:center;gap:1.25rem;height:42px;background:var(--chrome-2);border:1px solid var(--chrome-border);border-bottom:none;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);padding:0 1rem}
-.score-bar .teams{color:var(--bright);font-weight:600;font-size:.85rem;letter-spacing:.02em}
-.score-bar .teams .score{color:var(--gold);font-weight:700}
-.score-bar .sep{color:var(--chrome-border)}
-.score-bar .dn-dist{color:var(--bright);font-weight:600}
-.score-bar .live-badge{display:inline-flex;align-items:center;gap:.35rem;color:var(--live);font-weight:700;font-size:.62rem;letter-spacing:.1em}
-.score-bar .live-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--live);animation:livePulse 1.5s ease infinite}
-@keyframes livePulse{0%,100%{opacity:1}50%{opacity:.3}}
+.pipeline{display:grid;grid-template-columns:repeat(6,1fr);gap:0;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;overflow:hidden}
+.pipe-step{padding:1.5rem 1.1rem;border-right:1px solid var(--chrome-border);position:relative;display:flex;flex-direction:column;justify-content:space-between;min-height:200px}
+.pipe-step:last-child{border-right:none}
+.pipe-step::after{content:'→';position:absolute;right:-12px;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;color:var(--gold);background:var(--bg);padding:0 4px;font-size:1rem;z-index:2}
+.pipe-step:last-child::after{display:none}
+.pipe-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--gold);letter-spacing:.12em;margin-bottom:.4rem}
+.pipe-name{font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:700;color:var(--bright);margin-bottom:.5rem;letter-spacing:-.02em}
+.pipe-desc{font-size:.78rem;color:var(--text);line-height:1.5;flex:1}
+.pipe-stat{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--gold);letter-spacing:.04em;padding-top:.6rem;border-top:1px dashed var(--chrome-border);margin-top:.6rem}
 
-/* Broadcast stage */
-.stage{display:grid;grid-template-columns:1fr 2fr 1fr;gap:0;min-height:540px;background:var(--chrome-2);border:1px solid var(--chrome-border);border-top:none}
+.proof-wrap{background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;overflow:hidden}
+.proof-head{display:flex;justify-content:space-between;align-items:baseline;padding:1.1rem 1.5rem;background:var(--chrome-2);border-bottom:1px solid var(--chrome-border);flex-wrap:wrap;gap:1rem}
+.proof-head .ph-title{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.proof-head .ph-sub{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:.04em}
+.proof-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.78rem}
+.proof-table th{text-align:left;padding:.85rem 1.5rem;background:var(--chrome-2);color:var(--muted);font-weight:600;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--chrome-border)}
+.proof-table td{padding:.75rem 1.5rem;border-bottom:1px solid rgba(37,42,56,0.4);color:var(--text)}
+.proof-table tr:last-child td{border-bottom:none}
+.proof-table tr:hover td{background:rgba(196,144,0,0.04)}
+.proof-table .pos{color:var(--bright);font-weight:700;font-family:'Sora',sans-serif;font-size:.85rem}
+.proof-table .num{color:var(--bright);text-align:right;font-weight:600}
+.proof-table .winner{color:var(--gold);font-weight:700;text-transform:uppercase;font-size:.7rem;letter-spacing:.08em}
+.proof-table .winner.tie{color:var(--muted)}
+.proof-foot{padding:1rem 1.5rem;background:var(--chrome-2);border-top:1px solid var(--chrome-border);font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:.04em;line-height:1.7}
+.proof-foot strong{color:var(--gold);font-weight:700}
 
-.panel{background:var(--chrome);display:flex;flex-direction:column;overflow:hidden}
-.panel.left{border-right:1px solid var(--chrome-border)}
-.panel.right{border-left:1px solid var(--chrome-border)}
-.panel-section{padding:.9rem 1rem;border-bottom:1px solid var(--chrome-border);flex:1;display:flex;flex-direction:column}
-.panel-section:last-child{border-bottom:none}
-.panel-header{display:flex;align-items:center;gap:.5rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.3rem}
-.panel-header .live-dot{width:6px;height:6px;border-radius:50%;background:var(--live);opacity:0;transition:opacity .3s;flex-shrink:0}
-.panel-header .live-dot.on{opacity:1;animation:livePulse 1.2s ease infinite}
-.panel.left .ph-oc{color:var(--gold)}
-.panel.left .ph-qb{color:var(--blue)}
-.panel.right .ph-dc{color:var(--live)}
-.panel.right .ph-res{color:var(--green)}
-.panel-persona{font-size:.68rem;color:var(--muted);margin-bottom:.65rem;font-weight:400}
-.panel-stream{font-size:.78rem;color:var(--text);line-height:1.55;min-height:48px;flex:1;transition:opacity .2s}
-.panel-stream.fading{opacity:0}
+.holdout{display:grid;grid-template-columns:1fr 1.4fr;gap:1rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;padding:2rem;align-items:center}
+.holdout-stat{text-align:center;padding:1rem;border-right:1px dashed var(--chrome-border)}
+.holdout-stat .hs-big{font-family:'Sora',sans-serif;font-size:3.5rem;font-weight:800;color:var(--gold);letter-spacing:-.04em;line-height:1}
+.holdout-stat .hs-mid{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-top:.5rem}
+.holdout-stat .hs-small{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text);margin-top:.75rem;letter-spacing:.04em;line-height:1.5}
+.holdout-body h3{font-family:'Sora',sans-serif;font-size:1.4rem;font-weight:700;color:var(--bright);margin-bottom:.85rem;letter-spacing:-.02em}
+.holdout-body p{font-size:.92rem;color:var(--text);line-height:1.7;margin-bottom:.8rem}
+.holdout-body p:last-child{margin-bottom:0}
+.holdout-body em{font-style:normal;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:.85em;padding:.05em .35em;background:rgba(196,144,0,.08);border-radius:2px}
 
-.stream-call{display:block;color:var(--bright);font-weight:600;margin-bottom:.2rem;font-size:.82rem}
-.stream-pers{display:block;font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);margin-bottom:.35rem;letter-spacing:.03em}
-.stream-quote{display:block;font-family:'Source Serif 4',serif;font-style:italic;color:var(--muted);font-size:.8rem;line-height:1.5}
-.stream-read{display:block;color:var(--bright);font-size:.78rem;margin-bottom:.2rem}
-.stream-stat{display:block;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text);margin-bottom:.12rem}
-.stream-stat em{font-style:normal;font-weight:700;color:var(--gold)}
-.stream-td{display:block;font-family:'Sora',sans-serif;font-weight:700;color:var(--gold);font-size:.9rem;margin-top:.35rem;animation:tdFlash 1s ease infinite;letter-spacing:.04em}
-@keyframes tdFlash{0%,100%{opacity:1}50%{opacity:.5}}
+.roadmap{display:grid;grid-template-columns:repeat(6,1fr);gap:0;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;overflow:hidden}
+.r-step{padding:1.75rem 1rem;border-right:1px solid var(--chrome-border);text-align:center;background:var(--chrome);min-height:180px;display:flex;flex-direction:column;justify-content:flex-start}
+.r-step:last-child{border-right:none}
+.r-step .r-id{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.1em;color:var(--muted)}
+.r-step.done .r-id{color:var(--green)}
+.r-step.now .r-id{color:var(--gold)}
+.r-step .r-icon{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--chrome-2);border:2px solid var(--chrome-border);margin:.6rem auto;position:relative}
+.r-step.done .r-icon{background:var(--green);border-color:var(--green)}
+.r-step.done .r-icon::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--bg);font-size:.6rem;font-weight:700}
+.r-step.now .r-icon{background:var(--gold);border-color:var(--gold);box-shadow:0 0 0 4px rgba(196,144,0,.2);animation:pulse 2s ease infinite}
+.r-step .r-name{font-family:'Sora',sans-serif;font-size:.95rem;font-weight:700;color:var(--bright);margin-bottom:.4rem;letter-spacing:-.01em}
+.r-step .r-desc{font-size:.72rem;color:var(--text);line-height:1.45}
 
-/* ========== GAME BRIEF (ML INPUTS) ========== */
-.brief{background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;margin-bottom:.6rem;overflow:hidden}
-.brief-head{display:flex;align-items:baseline;justify-content:space-between;padding:.55rem 1rem;background:var(--chrome-2);border-bottom:1px solid var(--chrome-border);flex-wrap:wrap;gap:.5rem}
-.brief-title{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
-.brief-meta{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.04em}
-.brief-body{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
-.brief-col{padding:.7rem .9rem;border-right:1px solid var(--chrome-border);display:flex;flex-direction:column;gap:.32rem;min-width:0}
-.brief-col:last-child{border-right:none}
-.bc-label{font-family:'JetBrains Mono',monospace;font-size:.54rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:.15rem}
-.bc-row{display:flex;align-items:center;justify-content:space-between;gap:.4rem;font-family:'JetBrains Mono',monospace;font-size:.66rem;line-height:1.35}
-.bcr-label{color:var(--muted);flex-shrink:0}
-.bcr-name{color:var(--text);font-weight:500;flex-shrink:0}
-.bcr-val{color:var(--bright);font-weight:700;text-align:right;margin-left:auto}
-.bcr-val.good{color:var(--green)}
-.bcr-val.bad{color:var(--live)}
-.bcr-val.streak{letter-spacing:.18em;font-size:.62rem}
-.bcr-val.streak .w{color:var(--green)}
-.bcr-val.streak .l{color:var(--live)}
-.bcr-rank{color:var(--muted);font-size:.56rem;font-weight:600;min-width:22px;text-align:right;padding-left:.2rem}
-.bcr-status{font-family:'JetBrains Mono',monospace;font-size:.54rem;font-weight:700;letter-spacing:.06em;padding:.1rem .35rem;border-radius:2px;text-transform:uppercase;margin-left:auto}
-.bcr-status.q{background:rgba(196,144,0,.15);color:var(--gold)}
-.bcr-status.d{background:rgba(229,57,53,.15);color:var(--live)}
-.bcr-status.out{background:rgba(229,57,53,.22);color:var(--live);border:1px solid rgba(229,57,53,.4)}
-.bcr-status.p{background:rgba(76,175,80,.12);color:var(--green)}
+.principles{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.principle{padding:1.5rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;border-top:2px solid var(--gold);display:flex;flex-direction:column}
+.principle h4{font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;color:var(--bright);margin-bottom:.6rem;letter-spacing:-.01em}
+.principle p{font-size:.83rem;color:var(--text);line-height:1.6;flex:1}
+.principle .pmono{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-top:1rem;padding-top:.85rem;border-top:1px dashed var(--chrome-border)}
 
-/* ========== DRIVE TRACKER ========== */
-.drive-tracker{background:var(--chrome);border:1px solid var(--chrome-border);border-top:none;padding:.55rem 1rem;display:grid;grid-template-columns:auto 1fr auto;gap:1rem;align-items:center}
-.dt-info{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.04em;white-space:nowrap}
-.dt-info strong{color:var(--gold);font-weight:700}
-.dt-field{position:relative;height:22px;background:var(--bg);border:1px solid var(--chrome-border);border-radius:2px;overflow:hidden}
-.dt-yardline{position:absolute;top:0;bottom:0;width:1px;background:rgba(232,228,208,0.1)}
-.dt-yardline-label{position:absolute;top:50%;transform:translate(-50%,-50%);font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--muted);background:var(--bg);padding:0 3px;letter-spacing:.04em}
-.dt-endzone{position:absolute;top:0;bottom:0;width:8.3%;background:repeating-linear-gradient(45deg,rgba(232,228,208,.06) 0,rgba(232,228,208,.06) 4px,transparent 4px,transparent 8px)}
-.dt-endzone.left{left:0;border-right:1px solid rgba(232,228,208,.2)}
-.dt-endzone.right{right:0;border-left:1px solid rgba(196,144,0,.4);background:repeating-linear-gradient(45deg,rgba(196,144,0,.1) 0,rgba(196,144,0,.1) 4px,transparent 4px,transparent 8px)}
-.dt-fill{position:absolute;top:50%;height:3px;background:linear-gradient(to right,rgba(196,144,0,.35),var(--gold));transform:translateY(-50%);transition:width 1s ease;border-radius:2px;left:8.3%;width:0;z-index:1}
-.dt-ball{position:absolute;top:50%;width:9px;height:9px;background:var(--gold);border-radius:50%;transform:translate(-50%,-50%);transition:left 1s ease;box-shadow:0 0 8px rgba(196,144,0,.7);left:8.3%;z-index:3}
-.dt-stats{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.04em;white-space:nowrap;text-align:right}
-.dt-stats strong{color:var(--bright);font-weight:700}
-.dt-stats .yards-tag{color:var(--gold);font-weight:700}
+footer{padding:4rem 2rem 2rem;border-top:1px solid var(--chrome-border);max-width:1280px;margin:0 auto}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:2rem;margin-bottom:3rem}
+.footer-brand .logo{font-size:1.25rem;display:inline-block;margin-bottom:.85rem}
+.footer-brand p{font-size:.85rem;color:var(--muted);max-width:340px;line-height:1.65}
+.footer-col h5{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.85rem}
+.footer-col a{display:block;color:var(--text);text-decoration:none;font-size:.83rem;padding:.3rem 0;transition:color .15s}
+.footer-col a:hover{color:var(--bright)}
+.footer-bot{padding-top:2rem;border-top:1px solid var(--chrome-border);display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:.06em;flex-wrap:wrap;gap:1rem}
 
-/* ========== WHITEBOARD (center stage) ========== */
-.whiteboard-wrap{background:var(--whiteboard);position:relative;display:flex;flex-direction:column}
-.whiteboard-title{font-family:'Caveat',cursive;font-size:1.1rem;color:var(--chalk-dim);text-align:center;padding:.45rem 0 0;font-weight:600}
-.whiteboard{flex:1;position:relative;padding:.5rem}
-.whiteboard svg{width:100%;height:100%;display:block}
-
-/* Chalk texture overlay */
-.whiteboard::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.015) 2px,rgba(255,255,255,.015) 3px),radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.15) 100%);z-index:2}
-
-/* Play chyron */
-.play-chyron{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(14,19,32,.95);border:1px solid var(--chrome-border);padding:.3rem 1rem;font-family:'Sora',sans-serif;font-size:.75rem;font-weight:600;color:var(--bright);white-space:nowrap;opacity:0;transition:opacity .3s;z-index:5;border-radius:2px;letter-spacing:-.01em}
-.play-chyron.show{opacity:1}
-.play-chyron.td{border-color:var(--gold);background:rgba(196,144,0,.2);color:var(--gold-bright);box-shadow:0 0 18px rgba(196,144,0,.4)}
-
-/* Tickers */
-.ticker-bar{background:var(--chrome-2);border-top:1px solid var(--chrome-border);display:flex;flex-direction:column;flex-shrink:0}
-.ticker-row{display:flex;align-items:center;justify-content:center;gap:1.25rem;padding:.3rem .75rem;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:.62rem}
-.ticker-row.props{border-bottom:1px solid rgba(37,42,56,.5)}
-.ticker-item{display:flex;align-items:center;gap:.3rem;color:var(--muted)}
-.ticker-item .t-label{font-weight:500}
-.ticker-item .t-val{color:var(--bright);font-weight:700;min-width:22px;transition:color .4s}
-.ticker-item .t-val.over{color:var(--green)}
-.ticker-item .t-val.under{color:var(--live)}
-.ticker-item .t-line{color:var(--muted);font-size:.58rem}
-.ticker-row.fantasy .ticker-item .t-val{color:var(--gold)}
-
-/* ========== AGENT GRAPH (below stage) ========== */
-.agent-graph{background:var(--chrome);border:1px solid var(--chrome-border);border-top:none;padding:1rem 1.25rem;display:grid;grid-template-columns:auto 1fr auto;gap:1rem;align-items:center}
-.graph-label{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.graph-nodes{display:flex;align-items:center;gap:.25rem;justify-content:center}
-.gnode{display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:0 .35rem}
-.gn-dot{width:34px;height:34px;border-radius:50%;background:var(--bg);border:2px solid var(--chrome-border);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.56rem;font-weight:700;color:var(--muted);transition:all .4s ease;position:relative}
-.gn-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid transparent;transition:all .4s ease;opacity:0}
-.gn-label{font-family:'JetBrains Mono',monospace;font-size:.55rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);transition:color .3s}
-.gnode.active .gn-dot{background:var(--bg);box-shadow:0 0 16px var(--gn-glow,rgba(196,144,0,.5))}
-.gnode.active .gn-dot::after{opacity:.4}
-.gnode.done .gn-dot{background:var(--gn-color,var(--gold));color:var(--bg);border-color:var(--gn-color,var(--gold))}
-.gnode.active .gn-label,.gnode.done .gn-label{color:var(--gn-color)}
-.gnode[data-id="hist"]{--gn-color:var(--green);--gn-glow:rgba(76,175,80,.4)}
-.gnode[data-id="oc"]{--gn-color:var(--gold);--gn-glow:rgba(196,144,0,.4)}
-.gnode[data-id="dc"]{--gn-color:var(--live);--gn-glow:rgba(229,57,53,.4)}
-.gnode[data-id="qb"]{--gn-color:var(--blue);--gn-glow:rgba(96,160,255,.4)}
-.gnode[data-id="res"]{--gn-color:var(--green);--gn-glow:rgba(76,175,80,.4)}
-.gnode[data-id="out"]{--gn-color:var(--gold-bright);--gn-glow:rgba(230,176,48,.4)}
-.gn-dot.active{border-color:var(--gn-color)}
-.gnode.active .gn-dot,.gnode[data-id].active .gn-dot{border-color:var(--gn-color)}
-.gedge{width:32px;height:2px;background:var(--chrome-border);position:relative;flex-shrink:0}
-.gedge::before{content:'';position:absolute;top:0;left:0;height:100%;width:0;background:var(--gold);transition:width .4s ease}
-.gedge.on::before{width:100%}
-.gedge::after{content:'';position:absolute;right:-4px;top:-3px;border:4px solid transparent;border-left:5px solid var(--chrome-border);transition:border-left-color .3s}
-.gedge.on::after{border-left-color:var(--gold)}
-.graph-status{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);white-space:nowrap}
-.graph-status span{color:var(--gold);font-weight:700}
-
-/* ========== LIVE CONTROLS ========== */
-.controls{background:var(--chrome-2);border:1px solid var(--chrome-border);border-top:none;padding:1.1rem 1.5rem;display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:center}
-.controls-left{display:flex;gap:1.5rem;flex:1}
-.control-slider{flex:1;min-width:0}
-.control-slider label{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem}
-.control-slider label span.val{color:var(--gold);font-weight:700}
-.control-slider label span.dflt{color:var(--chrome-border);font-size:.54rem;font-style:italic;margin-left:.4rem}
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--chrome-border);border-radius:2px;outline:none;cursor:pointer}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 8px rgba(196,144,0,.3);transition:transform .15s}
-input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
-input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--gold);border:none;cursor:pointer}
-.controls-right{display:flex;gap:.75rem;align-items:center}
-.run-btn{font-family:'Sora',sans-serif;font-size:.78rem;font-weight:700;color:var(--bg);background:var(--gold);border:none;padding:.7rem 1.4rem;border-radius:3px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;transition:filter .2s,background .2s}
-.run-btn:hover:not(:disabled){background:var(--gold-bright);filter:brightness(1.05)}
-.run-btn:disabled{opacity:.5;cursor:not-allowed;background:var(--muted)}
-.run-btn.primary{box-shadow:0 0 20px rgba(196,144,0,.2)}
-.reset-btn{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);background:none;border:1px solid var(--chrome-border);padding:.55rem .8rem;border-radius:3px;cursor:pointer;letter-spacing:.05em;text-transform:uppercase;transition:all .2s}
-.reset-btn:hover{color:var(--bright);border-color:var(--muted)}
-
-/* ========== SECTIONS ========== */
-.section-fade{opacity:0;transform:translateY(20px);transition:opacity .7s ease,transform .7s ease}
-.section-fade.vis{opacity:1;transform:translateY(0)}
-
-/* Section 3: Three Systems */
-.systems{padding:6rem 2rem;max-width:960px;margin:0 auto}
-.systems-header{text-align:center;margin-bottom:3.5rem}
-.systems-header h2{font-family:'Sora',sans-serif;font-size:1.8rem;font-weight:700;color:var(--bright);letter-spacing:-.03em;margin-bottom:.4rem}
-.systems-header p{font-size:.9rem;color:var(--muted);max-width:540px;margin:0 auto}
-.sys-detail{margin-bottom:2.25rem;display:grid;grid-template-columns:90px 1fr;gap:1.25rem;align-items:start}
-.sys-tag{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding-top:.15rem}
-.sys-tag.live{color:var(--green)}
-.sys-tag.building{color:var(--gold)}
-.sys-body h3{font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:600;color:var(--bright);margin-bottom:.4rem}
-.sys-body p{font-size:.88rem;color:var(--text);line-height:1.7}
-.sys-body .callout{font-family:'Source Serif 4',serif;font-style:italic;color:var(--muted);margin-top:.5rem;font-size:.88rem}
-
-/* Section 4: Proof */
-.proof{padding:6rem 2rem;background:var(--chrome)}
-.proof .container{max-width:960px;margin:0 auto}
-.proof-header{margin-bottom:2.5rem}
-.proof-header h2{font-family:'Sora',sans-serif;font-size:1.8rem;font-weight:700;color:var(--bright);letter-spacing:-.03em;margin-bottom:.25rem}
-.proof-header p{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.03em}
-.proof-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin-bottom:2.5rem}
-.proof-stat{text-align:center;padding:1.5rem 1rem;border:1px solid var(--chrome-border);background:var(--bg);border-radius:4px}
-.proof-stat .ps-num{font-family:'Sora',sans-serif;font-size:2.1rem;font-weight:800;color:var(--green);letter-spacing:-.03em}
-.proof-stat .ps-label{font-size:.8rem;color:var(--text);margin-top:.3rem}
-.proof-stat .ps-ctx{font-size:.65rem;color:var(--muted);margin-top:.2rem}
-.proof-baseline{text-align:center;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted);margin-bottom:2rem;padding:.9rem;border:1px dashed var(--chrome-border);border-radius:4px}
-.proof-baseline strong{color:var(--bright)}
-.proof-meta{display:flex;gap:2.5rem;justify-content:center;flex-wrap:wrap}
-.proof-meta-item{text-align:center}
-.proof-meta-item .pm-num{font-family:'Sora',sans-serif;font-size:1.4rem;font-weight:700;color:var(--bright)}
-.proof-meta-item .pm-label{font-size:.72rem;color:var(--muted);margin-top:.15rem}
-
-/* Section 5: The Ask */
-.the-ask{padding:6rem 2rem;max-width:960px;margin:0 auto}
-.the-ask h2{font-family:'Sora',sans-serif;font-size:1.8rem;font-weight:700;color:var(--bright);letter-spacing:-.03em;margin-bottom:2.5rem}
-.ask-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-bottom:2.5rem}
-.ask-col h3{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:1.1rem}
-.ask-item{display:flex;gap:.65rem;margin-bottom:.85rem;align-items:start}
-.ask-n{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600;color:var(--gold);width:16px;flex-shrink:0;padding-top:.12rem}
-.ask-item p{font-size:.84rem;color:var(--text);line-height:1.6}
-.ask-item p strong{color:var(--bright);font-weight:600}
-.kpi-bar{display:flex;flex-wrap:wrap;gap:1.25rem 2rem;padding-top:1.75rem;border-top:1px solid var(--chrome-border)}
-.kpi{flex:1;min-width:120px}
-.kpi-label{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem}
-.kpi-row{display:flex;align-items:center;gap:.35rem}
-.kpi-now{font-size:.8rem;color:var(--muted)}
-.kpi-arr{color:var(--gold);font-size:.7rem}
-.kpi-target{font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;color:var(--green)}
-
-/* Footer */
-footer{text-align:center;padding:3rem 2rem;border-top:1px solid var(--chrome-border)}
-footer .ft{font-family:'Source Serif 4',serif;font-size:.9rem;color:var(--text);margin-bottom:.3rem}
-footer p{font-size:.72rem;color:var(--muted)}
-
-/* ========== ENGINE MODALS (Double-click to explore) ========== */
-.pillar{cursor:pointer;position:relative}
-.pillar-more{display:flex;align-items:center;justify-content:space-between;gap:.35rem;font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:.9rem;padding-top:.85rem;border-top:1px dashed var(--chrome-border);transition:color .3s;font-weight:600}
-.pillar-more::after{content:'\2192';font-size:.9rem;transition:transform .3s;color:var(--muted)}
-.pillar:hover .pillar-more,.pillar:hover .pillar-more::after{color:var(--gold)}
-.pillar:hover .pillar-more::after{transform:translateX(4px)}
-.pillar:hover{border-color:var(--gold);transform:translateY(-2px);transition:border-color .3s,transform .3s}
-
-.modal-backdrop{position:fixed;inset:0;background:rgba(4,7,12,.88);backdrop-filter:blur(10px);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
-.modal-backdrop.open{opacity:1;pointer-events:auto}
-
-.engine-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.96);width:92%;max-width:920px;max-height:88vh;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:8px;z-index:201;opacity:0;pointer-events:none;transition:opacity .35s ease,transform .35s ease;box-shadow:0 24px 80px rgba(0,0,0,.6)}
-.engine-modal.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
-.modal-scroll{max-height:88vh;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--chrome-border) transparent}
-.modal-scroll::-webkit-scrollbar{width:6px}
-.modal-scroll::-webkit-scrollbar-thumb{background:var(--chrome-border);border-radius:3px}
-.modal-scroll::-webkit-scrollbar-track{background:transparent}
-
-.modal-close{position:absolute;top:1rem;right:1rem;background:var(--chrome-2);border:1px solid var(--chrome-border);color:var(--text);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;line-height:1;z-index:10;transition:all .2s;font-family:inherit}
-.modal-close:hover{background:var(--bg);color:var(--bright);border-color:var(--muted);transform:scale(1.05)}
-
-.modal-hero{padding:2rem 2.5rem 1.5rem;border-bottom:1px solid var(--chrome-border);background:linear-gradient(180deg,rgba(196,144,0,.04) 0%,transparent 100%)}
-.modal-hero.process{background:linear-gradient(180deg,rgba(76,175,80,.06) 0%,transparent 100%);border-bottom-color:rgba(76,175,80,.3)}
-.modal-hero.form{background:linear-gradient(180deg,rgba(96,160,255,.06) 0%,transparent 100%);border-bottom-color:rgba(96,160,255,.3)}
-.modal-hero.chess{background:linear-gradient(180deg,rgba(196,144,0,.08) 0%,transparent 100%);border-bottom-color:rgba(196,144,0,.4)}
-.modal-hero .m-index{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:.22em;color:var(--muted);margin-bottom:.55rem;text-transform:uppercase}
-.modal-hero h2{font-family:'Sora',sans-serif;font-size:clamp(1.6rem,3vw,2.3rem);font-weight:800;letter-spacing:-.03em;color:var(--bright);line-height:1;margin-bottom:.75rem}
-.modal-hero h2 .m-icon{display:inline-block;margin-right:.4rem;font-size:.95em}
-.modal-tagline{font-family:'Source Serif 4',serif;font-style:italic;font-size:1rem;color:var(--gold);line-height:1.5;max-width:640px}
-.modal-hero.process .modal-tagline{color:var(--green)}
-.modal-hero.form .modal-tagline{color:var(--blue)}
-
-.modal-body{padding:1.75rem 2.5rem 2.5rem}
-.modal-body section{margin-bottom:2rem}
-.modal-body section:last-child{margin-bottom:0}
-.modal-body h3{font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:.9rem;padding-bottom:.45rem;border-bottom:1px dashed var(--chrome-border)}
-.modal-body p{font-size:.9rem;color:var(--text);line-height:1.7;margin-bottom:.5rem}
-.modal-body p strong{color:var(--bright);font-weight:600}
-
-.check-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:.75rem}
-.check-list li{display:flex;gap:.75rem;font-size:.88rem;color:var(--text);line-height:1.6}
-.check-list li::before{content:'\25B8';color:var(--gold);font-weight:700;flex-shrink:0;padding-top:.02rem}
-.check-list li strong{color:var(--bright);font-weight:600}
-
-.arch-layers{display:flex;flex-direction:column;gap:.5rem}
-.arch-layer{display:grid;grid-template-columns:120px 1fr;gap:1.25rem;padding:.75rem 1rem;background:var(--bg);border:1px solid var(--chrome-border);border-left:3px solid var(--gold);border-radius:3px;align-items:center;transition:border-color .3s}
-.arch-layer:hover{border-color:var(--chrome-border);border-left-width:4px}
-.arch-layer .al-tag{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
-.arch-layer .al-desc{font-size:.82rem;color:var(--text);line-height:1.55}
-.arch-layer.l1{border-left-color:#4caf50}.arch-layer.l1 .al-tag{color:#4caf50}
-.arch-layer.l2{border-left-color:#60a0ff}.arch-layer.l2 .al-tag{color:#60a0ff}
-.arch-layer.l3{border-left-color:#c49000}.arch-layer.l3 .al-tag{color:#c49000}
-.arch-layer.l4{border-left-color:#e6b030}.arch-layer.l4 .al-tag{color:#e6b030}
-.arch-layer.l5{border-left-color:#e05050}.arch-layer.l5 .al-tag{color:#e05050}
-
-.modal-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem}
-.mstat{text-align:center;padding:1rem .75rem;background:var(--bg);border:1px solid var(--chrome-border);border-radius:4px}
-.mstat .ms-num{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:800;color:var(--gold);letter-spacing:-.02em;line-height:1}
-.mstat.green .ms-num{color:var(--green)}
-.mstat.blue .ms-num{color:var(--blue)}
-.mstat .ms-label{font-size:.68rem;color:var(--text);margin-top:.4rem;line-height:1.35}
-.mstat .ms-ctx{font-size:.58rem;color:var(--muted);margin-top:.2rem;font-family:'JetBrains Mono',monospace}
-
-.sources-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem}
-.src-card{padding:.9rem 1.1rem;background:var(--bg);border:1px solid var(--chrome-border);border-radius:4px;display:flex;flex-direction:column;gap:.3rem;border-left:2px solid var(--blue)}
-.src-card .src-name{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;color:var(--blue);letter-spacing:.04em}
-.src-card .src-desc{font-size:.78rem;color:var(--text);line-height:1.55}
-.src-card .src-freq{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);margin-top:.25rem;letter-spacing:.03em}
-
-.sample-box{padding:1.1rem 1.25rem;background:var(--bg);border:1px solid var(--chrome-border);border-radius:4px;border-left:3px solid var(--green);font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--text);line-height:1.7}
-.sample-box .s-label{font-size:.6rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.5rem;font-weight:600}
-.sample-box .s-value{color:var(--bright);font-weight:600}
-.sample-box .s-value em{font-style:normal;color:var(--gold);font-weight:700}
-.sample-box.form-sample{border-left-color:var(--blue)}
-.sample-box.chess-sample{border-left-color:var(--gold)}
-
-.agents-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
-.agent-card{padding:1rem 1.15rem;background:var(--bg);border:1px solid var(--chrome-border);border-radius:4px;border-top:2px solid var(--gold)}
-.agent-card.oc-a{border-top-color:var(--gold)}
-.agent-card.dc-a{border-top-color:var(--live)}
-.agent-card.qb-a{border-top-color:var(--blue)}
-.agent-card.res-a{border-top-color:var(--green)}
-.agent-card .ac-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.45rem;gap:.5rem}
-.agent-card .ac-name{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--bright);text-transform:uppercase}
-.agent-card.oc-a .ac-name{color:var(--gold)}
-.agent-card.dc-a .ac-name{color:var(--live)}
-.agent-card.qb-a .ac-name{color:var(--blue)}
-.agent-card.res-a .ac-name{color:var(--green)}
-.agent-card .ac-role{font-size:.6rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.04em}
-.agent-card .ac-desc{font-size:.8rem;color:var(--text);line-height:1.55}
-.agent-card .ac-example{font-family:'Source Serif 4',serif;font-style:italic;color:var(--muted);font-size:.78rem;margin-top:.5rem;padding-top:.45rem;border-top:1px dashed var(--chrome-border)}
-
-/* ========== RESPONSIVE ========== */
-@media(max-width:1024px){
-  .pillars{grid-template-columns:1fr;gap:1rem}
-  .stage{grid-template-columns:1fr 1.6fr 1fr;min-height:480px}
-}
-@media(max-width:1024px){
-  .brief-body{grid-template-columns:repeat(2,1fr)}
-  .brief-col:nth-child(1),.brief-col:nth-child(3){border-right:1px solid var(--chrome-border)}
-  .brief-col:nth-child(2){border-right:none}
-  .brief-col:nth-child(1),.brief-col:nth-child(2){border-bottom:1px solid var(--chrome-border)}
-}
-@media(max-width:768px){
-  .overview{padding:6rem 1.25rem 3rem}
-  .demo{padding:3rem 1rem 5rem}
-  .pillars{gap:.75rem}
-  .pillar{padding:1.25rem 1.1rem}
-  .brief-head{padding:.5rem .75rem}
-  .brief-meta{font-size:.55rem}
-  .brief-col{padding:.6rem .7rem}
-  .bc-row{font-size:.62rem}
-  .drive-tracker{grid-template-columns:1fr;gap:.5rem;padding:.55rem .75rem}
-  .dt-info,.dt-stats{text-align:center;font-size:.58rem}
-  .stage{grid-template-columns:1fr;min-height:auto}
-  .panel.left{border-right:none;border-bottom:1px solid var(--chrome-border);flex-direction:row}
-  .panel.right{border-left:none;border-top:1px solid var(--chrome-border);flex-direction:row}
-  .panel-section{flex:1;min-width:0;border-bottom:none;border-right:1px solid var(--chrome-border)}
-  .panel-section:last-child{border-right:none}
-  .whiteboard-wrap{min-height:300px;order:-1}
-  .controls{grid-template-columns:1fr;gap:1rem}
-  .controls-left{flex-direction:column}
-  .agent-graph{grid-template-columns:1fr;gap:.5rem}
-  .graph-nodes{flex-wrap:wrap;justify-content:center}
-  .proof-stats{grid-template-columns:repeat(2,1fr)}
-  .ask-grid{grid-template-columns:1fr}
-  .sys-detail{grid-template-columns:1fr}
-  nav .nav-links{display:none}
-}
-@media(max-width:480px){
-  .overview h1{font-size:2.2rem}
-  .overview-sub{font-size:1rem}
-  .brief-body{grid-template-columns:1fr}
-  .brief-col{border-right:none!important;border-bottom:1px solid var(--chrome-border)}
-  .brief-col:last-child{border-bottom:none}
-  .brief-meta{display:none}
-  .score-bar{font-size:.58rem;gap:.6rem;height:36px;flex-wrap:wrap;padding:.25rem}
-  .data-feeds{padding:.5rem;gap:.3rem}
-  .feed-pill{font-size:.55rem;padding:.25rem .5rem}
-  .feed-label{font-size:.55rem}
-  .proof-stats{grid-template-columns:1fr 1fr}
-  .proof-meta{flex-direction:column;gap:1.25rem}
-  .kpi-bar{flex-direction:column}
-  .systems,.proof,.the-ask{padding:4rem 1.25rem}
-  input[type=range]{height:5px}
-  input[type=range]::-webkit-slider-thumb{width:20px;height:20px}
+@media(max-width:980px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .products,.pipeline,.roadmap,.principles{grid-template-columns:1fr}
+  .pipeline,.roadmap{display:flex;flex-direction:column}
+  .pipe-step,.r-step{border-right:none;border-bottom:1px solid var(--chrome-border)}
+  .pipe-step:last-child,.r-step:last-child{border-bottom:none}
+  .pipe-step::after{display:none}
+  .holdout{grid-template-columns:1fr}
+  .holdout-stat{border-right:none;border-bottom:1px dashed var(--chrome-border);padding-bottom:1.5rem}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  nav .nav-links li:not(:last-child){display:none}
 }
 
-/* Reduced motion */
-@media(prefers-reduced-motion:reduce){
-  .live-dot,.stream-td,.feed-pill .fp-dot,.scroll-hint .arrow{animation:none!important}
-  .whiteboard::after{display:none}
-  .play-chyron,.panel-stream,.controls,.agent-graph{transition:none}
-  .section-fade{opacity:1;transform:none;transition:none}
-}
+.fade-in{opacity:0;transform:translateY(20px);transition:opacity .8s ease,transform .8s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
 </style>
 </head>
 <body>
 
-<nav><div class="nav-inner">
-  <div class="logo">PF<span>F</span></div>
-  <ul class="nav-links">
-    <li><a href="#overview">Approach</a></li>
-    <li><a href="#demo">Demo</a></li>
-    <li><a href="#systems">System</a></li>
-    <li><a href="story.html">Our Story</a></li>
-    <li><a href="#proof">Proof</a></li>
-    <li><a href="#ask">The Ask</a></li>
-  </ul>
-</div></nav>
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="/">Snap<span>count</span></a>
+    <ul class="nav-links">
+      <li><a href="#products">Products</a></li>
+      <li><a href="#pipeline">How it works</a></li>
+      <li><a href="#proof">Numbers</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+      <li><a href="/architecture.html">Architecture</a></li>
+      <li><a href="/story.html">Story</a></li>
+      <li><a href="/slides.html" class="cta">Deck →</a></li>
+    </ul>
+  </div>
+</nav>
 
-<!-- ========== SECTION 1: HERO / OVERVIEW ========== -->
-<section class="overview" id="overview">
-  <div class="kicker">The Thesis</div>
-  <h1>Football is <em>chess</em>.<br>We built the engine.</h1>
-  <p class="overview-sub">
-    Every NFL snap is the product of three things colliding: <strong>what the film says wins</strong>, <strong>who's rolling this week</strong>, and <strong>what the other sideline is dialing up</strong>. We model all three &mdash; then let them play each other, snap by snap.
-  </p>
+<header class="hero">
+  <div class="kicker"><span class="dot"></span>Agent-orchestrated NFL prediction · 2026 build</div>
+  <h1>We don't <span class="strike">predict</span><br>football. We <em>orchestrate</em> it.</h1>
+  <p class="hero-sub">Snapcount is a multi-agent platform that turns <strong>484,254 plays</strong> of NFL data into per-player projections, calibrated correlations, and explanations you can read in plain English. Built greenfield from PRD intent. Walk-forward verified. <strong>2025 quarantined</strong> for the ship-gate.</p>
 
-  <div class="pillars">
-    <!-- PILLAR 1: PROCESS / ML -->
-    <div class="pillar p1" data-engine="process">
-      <div class="pillar-index">01 &middot; HISTORICAL INTELLIGENCE</div>
-      <div class="pillar-title"><span class="accent">&#128640;</span> PROCESS</div>
-      <div class="pillar-viz">
-        <svg viewBox="0 0 240 80" preserveAspectRatio="none">
-          <!-- Data matrix flowing in -->
-          <g fill="#4caf50">
-            <rect x="6" y="18" width="14" height="14" opacity=".9"><animate attributeName="opacity" values=".9;.3;.9" dur="3s" repeatCount="indefinite"/></rect>
-            <rect x="24" y="18" width="14" height="14" opacity=".5"><animate attributeName="opacity" values=".5;.9;.5" dur="3s" begin=".3s" repeatCount="indefinite"/></rect>
-            <rect x="42" y="18" width="14" height="14" opacity=".8"><animate attributeName="opacity" values=".8;.4;.8" dur="3s" begin=".6s" repeatCount="indefinite"/></rect>
-            <rect x="60" y="18" width="14" height="14" opacity=".3"><animate attributeName="opacity" values=".3;.7;.3" dur="3s" begin=".9s" repeatCount="indefinite"/></rect>
-            <rect x="6" y="36" width="14" height="14" opacity=".6"><animate attributeName="opacity" values=".6;.9;.6" dur="3s" begin=".4s" repeatCount="indefinite"/></rect>
-            <rect x="24" y="36" width="14" height="14" opacity=".9"><animate attributeName="opacity" values=".9;.4;.9" dur="3s" begin=".7s" repeatCount="indefinite"/></rect>
-            <rect x="42" y="36" width="14" height="14" opacity=".4"><animate attributeName="opacity" values=".4;.8;.4" dur="3s" begin="1s" repeatCount="indefinite"/></rect>
-            <rect x="60" y="36" width="14" height="14" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="3s" begin="1.3s" repeatCount="indefinite"/></rect>
-            <rect x="6" y="54" width="14" height="14" opacity=".4"><animate attributeName="opacity" values=".4;.8;.4" dur="3s" begin=".2s" repeatCount="indefinite"/></rect>
-            <rect x="24" y="54" width="14" height="14" opacity=".7"><animate attributeName="opacity" values=".7;.3;.7" dur="3s" begin=".5s" repeatCount="indefinite"/></rect>
-            <rect x="42" y="54" width="14" height="14" opacity=".9"><animate attributeName="opacity" values=".9;.5;.9" dur="3s" begin=".8s" repeatCount="indefinite"/></rect>
-            <rect x="60" y="54" width="14" height="14" opacity=".5"><animate attributeName="opacity" values=".5;.9;.5" dur="3s" begin="1.1s" repeatCount="indefinite"/></rect>
-          </g>
-          <!-- Arrow to model -->
-          <line x1="86" y1="40" x2="150" y2="40" stroke="#4caf50" stroke-width="1.5" stroke-dasharray="3,3" opacity=".7"/>
-          <polygon points="146,35 156,40 146,45" fill="#4caf50" opacity=".8"/>
-          <!-- Model node -->
-          <rect x="160" y="22" width="70" height="36" rx="3" fill="none" stroke="#4caf50" stroke-width="1.5"/>
-          <text x="195" y="38" text-anchor="middle" fill="#4caf50" font-family="JetBrains Mono" font-size="8" font-weight="700">MODEL</text>
-          <text x="195" y="50" text-anchor="middle" fill="#4caf50" font-family="JetBrains Mono" font-size="7" opacity=".8">115 features</text>
-        </svg>
-      </div>
-      <p class="pillar-body">Eight NFL seasons, 43,564 player-games, 300K+ plays. 115 process calculators measure how the game generates stats &mdash; not what stats were generated.</p>
-      <div class="pillar-stat">
-        <div><div class="ps-n">3.97%</div><div class="ps-l">QB yards error<br>(vs 15&ndash;25% industry)</div></div>
-        <div><div class="ps-n">8 yrs</div><div class="ps-l">Historical depth<br>constitutional rules</div></div>
-      </div>
-      <div class="pillar-more">Explore the Process engine</div>
-    </div>
-
-    <!-- PILLAR 2: FORM / RECENT -->
-    <div class="pillar p2" data-engine="form">
-      <div class="pillar-index">02 &middot; WHO'S HOT RIGHT NOW</div>
-      <div class="pillar-title"><span class="accent">&#128202;</span> FORM</div>
-      <div class="pillar-viz">
-        <svg viewBox="0 0 240 80" preserveAspectRatio="none">
-          <!-- Sparkline style -->
-          <defs>
-            <linearGradient id="formGrad" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="#60a0ff" stop-opacity=".3"/>
-              <stop offset="100%" stop-color="#60a0ff" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <!-- Grid -->
-          <line x1="10" y1="20" x2="230" y2="20" stroke="#252a38" stroke-width="1" stroke-dasharray="2,3"/>
-          <line x1="10" y1="40" x2="230" y2="40" stroke="#252a38" stroke-width="1" stroke-dasharray="2,3"/>
-          <line x1="10" y1="60" x2="230" y2="60" stroke="#252a38" stroke-width="1" stroke-dasharray="2,3"/>
-          <!-- Fill under curve -->
-          <path d="M 10 55 L 30 48 L 50 52 L 70 38 L 90 42 L 110 32 L 130 25 L 150 30 L 170 18 L 190 22 L 210 15 L 230 20 L 230 80 L 10 80 Z" fill="url(#formGrad)"/>
-          <!-- Line -->
-          <polyline points="10,55 30,48 50,52 70,38 90,42 110,32 130,25 150,30 170,18 190,22 210,15 230,20" stroke="#60a0ff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- Dots -->
-          <circle cx="210" cy="15" r="3" fill="#60a0ff"><animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite"/></circle>
-          <circle cx="230" cy="20" r="2" fill="#60a0ff" opacity=".6"/>
-          <!-- Label -->
-          <text x="215" y="8" fill="#60a0ff" font-family="JetBrains Mono" font-size="8" font-weight="700" text-anchor="end">W6: +18%</text>
-        </svg>
-      </div>
-      <p class="pillar-body">Up-to-the-hour feeds: injury reports, snap counts, route-adjusted yards, weekly Vegas movements, weather, pace trends. Last 4 games weighted heavier than last 4 seasons.</p>
-      <div class="pillar-stat">
-        <div><div class="ps-n">6</div><div class="ps-l">Live data sources<br>updated pre-game</div></div>
-        <div><div class="ps-n">&lt;1h</div><div class="ps-l">Lag from injury<br>news to forecast</div></div>
-      </div>
-      <div class="pillar-more">Explore the Form engine</div>
-    </div>
-
-    <!-- PILLAR 3: CHESS / MULTI-AGENT -->
-    <div class="pillar p3" data-engine="chess">
-      <div class="pillar-index">03 &middot; ADVERSARIAL SIMULATION</div>
-      <div class="pillar-title"><span class="accent">&#9822;</span> CHESS</div>
-      <div class="pillar-viz">
-        <svg viewBox="0 0 240 80" preserveAspectRatio="none">
-          <!-- Agent nodes connected -->
-          <!-- Edges -->
-          <line x1="40" y1="25" x2="120" y2="40" stroke="#c49000" stroke-width="1.5" opacity=".7"/>
-          <line x1="40" y1="55" x2="120" y2="40" stroke="#c49000" stroke-width="1.5" opacity=".7"/>
-          <line x1="120" y1="40" x2="200" y2="25" stroke="#c49000" stroke-width="1.5" stroke-dasharray="3,3" opacity=".7"/>
-          <line x1="120" y1="40" x2="200" y2="55" stroke="#c49000" stroke-width="1.5" stroke-dasharray="3,3" opacity=".7"/>
-          <line x1="200" y1="25" x2="200" y2="55" stroke="#c49000" stroke-width="1" opacity=".4"/>
-          <!-- Flow particles -->
-          <circle cx="40" cy="25" r="2" fill="#c49000">
-            <animateMotion dur="2s" repeatCount="indefinite" path="M 0 0 L 80 15"/>
-          </circle>
-          <circle cx="40" cy="55" r="2" fill="#c49000">
-            <animateMotion dur="2s" begin=".5s" repeatCount="indefinite" path="M 0 0 L 80 -15"/>
-          </circle>
-          <circle cx="120" cy="40" r="2" fill="#e05050">
-            <animateMotion dur="2s" begin="1s" repeatCount="indefinite" path="M 0 0 L 80 -15"/>
-          </circle>
-          <!-- Nodes -->
-          <circle cx="40" cy="25" r="11" fill="#141821" stroke="#c49000" stroke-width="2"/>
-          <text x="40" y="28" text-anchor="middle" fill="#c49000" font-family="JetBrains Mono" font-size="7" font-weight="700">OC</text>
-          <circle cx="40" cy="55" r="11" fill="#141821" stroke="#60a0ff" stroke-width="2"/>
-          <text x="40" y="58" text-anchor="middle" fill="#60a0ff" font-family="JetBrains Mono" font-size="7" font-weight="700">QB</text>
-          <circle cx="120" cy="40" r="13" fill="#141821" stroke="#c49000" stroke-width="2">
-            <animate attributeName="stroke-width" values="2;3;2" dur="2s" repeatCount="indefinite"/>
-          </circle>
-          <text x="120" y="43" text-anchor="middle" fill="#c49000" font-family="JetBrains Mono" font-size="7" font-weight="700">SIM</text>
-          <circle cx="200" cy="25" r="11" fill="#141821" stroke="#e05050" stroke-width="2"/>
-          <text x="200" y="28" text-anchor="middle" fill="#e05050" font-family="JetBrains Mono" font-size="7" font-weight="700">DC</text>
-          <circle cx="200" cy="55" r="11" fill="#141821" stroke="#4caf50" stroke-width="2"/>
-          <text x="200" y="58" text-anchor="middle" fill="#4caf50" font-family="JetBrains Mono" font-size="7" font-weight="700">RES</text>
-        </svg>
-      </div>
-      <p class="pillar-body">AI coordinator agents carry real tendencies. They call plays at each other like actual coaches would. A statistical resolver (calibrated on 300K plays) decides what happens.</p>
-      <div class="pillar-stat">
-        <div><div class="ps-n">1,000&times;</div><div class="ps-l">Simulations per game<br>full distribution</div></div>
-        <div><div class="ps-n">4+</div><div class="ps-l">Agents per play<br>adversarial</div></div>
-      </div>
-      <div class="pillar-more">Explore the Chess engine</div>
-    </div>
+  <div class="hero-stats">
+    <div class="hs"><div class="hs-n">27</div><div class="hs-l">nflverse sources<br>2016 → 2025</div></div>
+    <div class="hs"><div class="hs-n">484K</div><div class="hs-l">plays analyzed<br>372 cols deep</div></div>
+    <div class="hs"><div class="hs-n">8</div><div class="hs-l">player-level<br>targets baselined</div></div>
+    <div class="hs"><div class="hs-n">33/33</div><div class="hs-l">anti-leakage tests<br>passing</div></div>
+    <div class="hs"><div class="hs-n">5</div><div class="hs-l">codex audit rounds<br>independently passed</div></div>
   </div>
 
-  <div class="scroll-hint">Watch a drive simulate &mdash; live<div class="arrow"></div></div>
-</section>
-
-<!-- ========== SECTION 2: LIVE DEMO ========== -->
-<section class="demo section-fade" id="demo">
-  <div class="demo-header">
-    <h2>One drive. Every data source. Every agent.</h2>
-    <p>Six plays. The coordinators adapt in real time. The whiteboard draws itself. The resolver computes. Adjust any parameter and run it again.</p>
+  <div class="hero-cta">
+    <a class="btn btn-primary" href="/slides.html">Watch the deck →</a>
+    <a class="btn btn-ghost" href="#proof">See the numbers</a>
+    <a class="btn btn-ghost" href="/architecture.html">Read the architecture</a>
   </div>
 
-  <!-- Game Brief: ML inputs feeding the prediction -->
-  <div class="brief">
-    <div class="brief-head">
-      <span class="brief-title">Game Brief &middot; ML Inputs</span>
-      <span class="brief-meta">Week 7 &middot; KC @ SF &middot; Sun 4:25p ET &middot; Levi's Stadium &middot; 68&deg;F clear, no wind</span>
-    </div>
-    <div class="brief-body">
-      <div class="brief-col">
-        <div class="bc-label">Vegas Market</div>
-        <div class="bc-row"><span class="bcr-label">Spread</span><span class="bcr-val">KC -3.0</span></div>
-        <div class="bc-row"><span class="bcr-label">Total</span><span class="bcr-val">48.5</span></div>
-        <div class="bc-row"><span class="bcr-label">KC Implied</span><span class="bcr-val">25.8</span></div>
-        <div class="bc-row"><span class="bcr-label">SF Implied</span><span class="bcr-val">22.7</span></div>
-      </div>
-      <div class="brief-col">
-        <div class="bc-label">Injury Report &middot; Sun AM</div>
-        <div class="bc-row"><span class="bcr-name">Pacheco RB</span><span class="bcr-status p">PROB</span></div>
-        <div class="bc-row"><span class="bcr-name">McDuffie CB</span><span class="bcr-status q">Q</span></div>
-        <div class="bc-row"><span class="bcr-name">Bosa EDGE</span><span class="bcr-status q">Q</span></div>
-        <div class="bc-row"><span class="bcr-name">Greenlaw LB</span><span class="bcr-status out">OUT</span></div>
-      </div>
-      <div class="brief-col">
-        <div class="bc-label">Recent Form &middot; Last 4</div>
-        <div class="bc-row"><span class="bcr-label">KC record</span><span class="bcr-val streak"><span class="w">W</span> <span class="w">W</span> <span class="l">L</span> <span class="w">W</span></span></div>
-        <div class="bc-row"><span class="bcr-label">SF record</span><span class="bcr-val streak"><span class="w">W</span> <span class="w">W</span> <span class="l">L</span> <span class="l">L</span></span></div>
-        <div class="bc-row"><span class="bcr-label">KC pace</span><span class="bcr-val">67.2 / g</span></div>
-        <div class="bc-row"><span class="bcr-label">SF pace</span><span class="bcr-val">63.8 / g</span></div>
-      </div>
-      <div class="brief-col">
-        <div class="bc-label">Rolling EPA &middot; Rank</div>
-        <div class="bc-row"><span class="bcr-label">KC OFF</span><span class="bcr-val good">+0.18</span><span class="bcr-rank">#3</span></div>
-        <div class="bc-row"><span class="bcr-label">KC pass</span><span class="bcr-val good">+0.22</span><span class="bcr-rank">#2</span></div>
-        <div class="bc-row"><span class="bcr-label">SF DEF</span><span class="bcr-val">+0.04</span><span class="bcr-rank">#15</span></div>
-        <div class="bc-row"><span class="bcr-label">SF run D</span><span class="bcr-val bad">-0.05</span><span class="bcr-rank">#19</span></div>
-      </div>
-    </div>
+  <div class="scroll-hint">Scroll<span class="arrow"></span></div>
+</header>
+
+<section class="s fade-in" id="products">
+  <div class="s-head">
+    <div class="kicker">Product surface · Four agents, one stack</div>
+    <h2>Four products. One feedback loop.</h2>
+    <p>Every prediction Snapcount ships is the output of four cooperating systems: <strong>SnapScore</strong> learns from history, <strong>SnapForm</strong> adjusts for the present, <strong>SnapPro</strong> turns predictions into decisions, and <strong>NFLooker</strong> explains why in plain English.</p>
   </div>
-
-  <!-- Data source feeds -->
-  <div class="data-feeds">
-    <span class="feed-label">Live Inputs</span>
-    <span class="feed-pill"><span class="fp-dot"></span>NFL Play-by-Play</span>
-    <span class="feed-pill"><span class="fp-dot"></span>PFF Grades</span>
-    <span class="feed-pill"><span class="fp-dot"></span>Vegas Lines</span>
-    <span class="feed-pill"><span class="fp-dot"></span>Injury Report</span>
-    <span class="feed-pill"><span class="fp-dot"></span>Weekly Form</span>
-    <span class="feed-pill"><span class="fp-dot"></span>Weather</span>
-  </div>
-
-  <!-- Score bar -->
-  <div class="score-bar">
-    <span class="live-badge">LIVE</span>
-    <span class="teams"><span id="sb-away">KC</span> <span class="score" id="sb-kc">10</span> &mdash; <span id="sb-home">SF</span> <span class="score" id="sb-sf">14</span></span>
-    <span class="sep">|</span>
-    <span id="sb-qtr">Q3</span> <span id="sb-clock">8:42</span>
-    <span class="sep">|</span>
-    <span class="dn-dist" id="sb-down">1st &amp; 10</span>
-    <span class="sep">|</span>
-    <span id="sb-spot">KC 35</span>
-    <span class="sep">|</span>
-    <span id="sb-play">Play 1/6</span>
-  </div>
-
-  <!-- Drive Tracker -->
-  <div class="drive-tracker">
-    <div class="dt-info"><strong>Drive 7</strong> &middot; Started <strong>KC 35</strong></div>
-    <div class="dt-field" id="dt-field">
-      <div class="dt-endzone left"></div>
-      <div class="dt-endzone right"></div>
-      <div class="dt-yardline" style="left:50%"><span class="dt-yardline-label">50</span></div>
-      <div class="dt-yardline" style="left:29.15%"></div>
-      <div class="dt-yardline" style="left:70.85%"></div>
-      <div class="dt-fill" id="dt-fill"></div>
-      <div class="dt-ball" id="dt-ball" style="left:37.7%"></div>
+  <div class="products">
+    <div class="product p1">
+      <div class="product-idx">01 / SnapScore</div>
+      <div class="product-name">SnapScore</div>
+      <div class="product-tag">Per-player projection model</div>
+      <p class="product-body">XGBoost on a walk-forward harness across 2016–2024. Eight player-level targets, validated weekly on 2024 wks 9+, holdout-quarantined 2025 for the ship-gate. Anti-leakage gate enforced at split-time.</p>
+      <div class="product-meta"><span>OWNER <strong>Modeling lane</strong></span><span>STATUS <strong>M2 ✓</strong></span></div>
     </div>
-    <div class="dt-stats"><span class="yards-tag" id="dt-yards">0</span> yds &middot; <strong id="dt-time">0:00</strong> &middot; <span id="dt-plays">0</span>/6</div>
-  </div>
-
-  <!-- Three-column stage -->
-  <div class="stage">
-    <!-- LEFT PANEL: OC + QB -->
-    <div class="panel left">
-      <div class="panel-section">
-        <div class="panel-header ph-oc"><span class="live-dot" id="oc-live"></span>OC AGENT &middot; Offensive Coordinator</div>
-        <div class="panel-persona">Kyle Shanahan &middot; play-calling tendencies</div>
-        <div class="panel-stream" id="oc-stream"></div>
-      </div>
-      <div class="panel-section">
-        <div class="panel-header ph-qb"><span class="live-dot" id="qb-live"></span>QB AGENT &middot; Field General</div>
-        <div class="panel-persona">Patrick Mahomes &middot; pre-snap read &amp; audibles</div>
-        <div class="panel-stream" id="qb-stream"></div>
-      </div>
+    <div class="product p2">
+      <div class="product-idx">02 / SnapForm</div>
+      <div class="product-name">SnapForm</div>
+      <div class="product-tag">Recency / injury / weather adjuster</div>
+      <p class="product-body">Closed-form formulas that translate live signals into a multiplier on SnapScore baselines. Injury decay curves, weather penalties, snap-share trajectories. Authored under <code>snapform/formulas/</code>; refreshed weekly by Adam.</p>
+      <div class="product-meta"><span>OWNER <strong>Adam (news)</strong></span><span>STATUS <strong>v1 in flight</strong></span></div>
     </div>
-
-    <!-- CENTER: WHITEBOARD -->
-    <div class="whiteboard-wrap">
-      <div class="whiteboard-title" id="wb-title">Chalkboard &mdash; Coaches' View</div>
-      <div class="whiteboard">
-        <svg id="board" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <marker id="arrowO" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#c49000"/>
-            </marker>
-            <marker id="arrowD" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#e05050"/>
-            </marker>
-            <filter id="chalkGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation=".6"/>
-            </filter>
-          </defs>
-
-          <!-- Whiteboard surface gradient -->
-          <rect width="800" height="600" fill="#0e1320"/>
-
-          <!-- Yard markers (chalk strokes) -->
-          <line x1="40" y1="70" x2="760" y2="70" stroke="rgba(232,228,208,0.45)" stroke-width="2" stroke-dasharray="14,6"/>
-          <line x1="40" y1="170" x2="760" y2="170" stroke="rgba(232,228,208,0.08)" stroke-width="1"/>
-          <line x1="40" y1="270" x2="760" y2="270" stroke="rgba(232,228,208,0.08)" stroke-width="1"/>
-          <line x1="40" y1="370" x2="760" y2="370" stroke="rgba(232,228,208,0.08)" stroke-width="1"/>
-          <line x1="40" y1="570" x2="760" y2="570" stroke="rgba(232,228,208,0.08)" stroke-width="1"/>
-
-          <!-- Hash marks (dotted chalk) -->
-          <line x1="296" y1="76" x2="296" y2="564" stroke="rgba(232,228,208,0.06)" stroke-width="1" stroke-dasharray="2,10"/>
-          <line x1="504" y1="76" x2="504" y2="564" stroke="rgba(232,228,208,0.06)" stroke-width="1" stroke-dasharray="2,10"/>
-
-          <!-- Yard numbers (chalk, handwritten feel) -->
-          <text x="52" y="180" fill="rgba(232,228,208,0.1)" font-family="Caveat,cursive" font-size="22" font-weight="600">10</text>
-          <text x="52" y="280" fill="rgba(232,228,208,0.1)" font-family="Caveat,cursive" font-size="22" font-weight="600">20</text>
-          <text x="52" y="380" fill="rgba(232,228,208,0.1)" font-family="Caveat,cursive" font-size="22" font-weight="600">30</text>
-          <text x="52" y="480" fill="rgba(232,228,208,0.1)" font-family="Caveat,cursive" font-size="22" font-weight="600">40</text>
-
-          <!-- Endzone label (chalk) -->
-          <text x="400" y="45" text-anchor="middle" fill="rgba(232,228,208,0.15)" font-family="Caveat,cursive" font-size="32" font-weight="600" letter-spacing="6">end zone</text>
-
-          <!-- LOS (yellow chalk) -->
-          <line id="los" x1="40" y1="470" x2="760" y2="470" stroke="#c49000" stroke-width="2.2" stroke-dasharray="10,5" opacity=".75"/>
-          <text x="762" y="468" fill="#c49000" font-family="Caveat,cursive" font-size="14" font-weight="600" opacity=".8">LOS</text>
-
-          <!-- Route layer (cleared each play) -->
-          <g id="routes"></g>
-
-          <!-- Ball trail -->
-          <line id="ball-trail" x1="0" y1="0" x2="0" y2="0" stroke="rgba(196,144,0,0.5)" stroke-width="1.8" stroke-dasharray="5,3" opacity="0"/>
-
-          <!-- Endzone glow -->
-          <rect id="ez-glow" y="0" width="800" height="70" fill="#c49000" opacity="0"/>
-
-          <!-- DEFENSE: X marks -->
-          <g class="xo-def" id="d-del" transform="translate(338, 460)">
-            <line x1="-7" y1="-7" x2="7" y2="7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="-7" y1="7" x2="7" y2="-7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-          </g>
-          <g class="xo-def" id="d-dtl" transform="translate(382, 460)">
-            <line x1="-7" y1="-7" x2="7" y2="7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="-7" y1="7" x2="7" y2="-7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-          </g>
-          <g class="xo-def" id="d-dtr" transform="translate(418, 460)">
-            <line x1="-7" y1="-7" x2="7" y2="7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="-7" y1="7" x2="7" y2="-7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-          </g>
-          <g class="xo-def" id="d-der" transform="translate(462, 460)">
-            <line x1="-7" y1="-7" x2="7" y2="7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="-7" y1="7" x2="7" y2="-7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-          </g>
-          <g class="xo-def" id="d-mlb" transform="translate(400, 425)">
-            <line x1="-7" y1="-7" x2="7" y2="7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="-7" y1="7" x2="7" y2="-7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-          </g>
-          <g class="xo-def" id="d-wlb" transform="translate(335, 428)">
-            <line x1="-7" y1="-7" x2="7" y2="7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="-7" y1="7" x2="7" y2="-7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-          </g>
-          <g class="xo-def" id="d-slb" transform="translate(465, 428)">
-            <line x1="-7" y1="-7" x2="7" y2="7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="-7" y1="7" x2="7" y2="-7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-          </g>
-          <g class="xo-def" id="d-cbl" transform="translate(82, 450)">
-            <line x1="-7" y1="-7" x2="7" y2="7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="-7" y1="7" x2="7" y2="-7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-          </g>
-          <g class="xo-def" id="d-cbr" transform="translate(718, 450)">
-            <line x1="-8" y1="-8" x2="8" y2="8" stroke="#e05050" stroke-width="3" stroke-linecap="round"/>
-            <line x1="-8" y1="8" x2="8" y2="-8" stroke="#e05050" stroke-width="3" stroke-linecap="round"/>
-          </g>
-          <g class="xo-def" id="d-fs" transform="translate(400, 350)">
-            <line x1="-7" y1="-7" x2="7" y2="7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="-7" y1="7" x2="7" y2="-7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-            <text x="0" y="-12" text-anchor="middle" fill="rgba(224,80,80,0.65)" font-family="Caveat,cursive" font-size="11" font-weight="600">FS</text>
-          </g>
-          <g class="xo-def" id="d-ss" transform="translate(560, 385)">
-            <line x1="-7" y1="-7" x2="7" y2="7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="-7" y1="7" x2="7" y2="-7" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
-            <text x="0" y="-12" text-anchor="middle" fill="rgba(224,80,80,0.65)" font-family="Caveat,cursive" font-size="11" font-weight="600">SS</text>
-          </g>
-
-          <!-- OFFENSE: O marks -->
-          <g class="xo-off" id="o-lt" transform="translate(330, 470)"><circle r="7.5" fill="none" stroke="#e8e4d0" stroke-width="2"/></g>
-          <g class="xo-off" id="o-lg" transform="translate(365, 470)"><circle r="7.5" fill="none" stroke="#e8e4d0" stroke-width="2"/></g>
-          <g class="xo-off" id="o-c" transform="translate(400, 470)"><circle r="7.5" fill="none" stroke="#e8e4d0" stroke-width="2"/></g>
-          <g class="xo-off" id="o-rg" transform="translate(435, 470)"><circle r="7.5" fill="none" stroke="#e8e4d0" stroke-width="2"/></g>
-          <g class="xo-off" id="o-rt" transform="translate(470, 470)"><circle r="7.5" fill="none" stroke="#e8e4d0" stroke-width="2"/></g>
-          <g class="xo-off" id="o-te" transform="translate(505, 472)">
-            <circle r="7.5" fill="none" stroke="#e8e4d0" stroke-width="2"/>
-            <text x="0" y="-12" text-anchor="middle" fill="rgba(232,228,208,0.75)" font-family="Caveat,cursive" font-size="11" font-weight="600">TE</text>
-          </g>
-          <g class="xo-off" id="o-rb" transform="translate(365, 518)">
-            <circle r="7.5" fill="none" stroke="#e8e4d0" stroke-width="2"/>
-            <text x="0" y="-12" text-anchor="middle" fill="rgba(232,228,208,0.75)" font-family="Caveat,cursive" font-size="11" font-weight="600">RB</text>
-          </g>
-          <g class="xo-off" id="o-wrx" transform="translate(80, 468)">
-            <circle r="7.5" fill="none" stroke="#e8e4d0" stroke-width="2"/>
-            <text x="0" y="-12" text-anchor="middle" fill="rgba(232,228,208,0.75)" font-family="Caveat,cursive" font-size="11" font-weight="600">X</text>
-          </g>
-          <g class="xo-off" id="o-slot" transform="translate(600, 468)">
-            <circle r="7.5" fill="none" stroke="#e8e4d0" stroke-width="2"/>
-            <text x="0" y="-12" text-anchor="middle" fill="rgba(232,228,208,0.75)" font-family="Caveat,cursive" font-size="11" font-weight="600">H</text>
-          </g>
-          <g class="xo-off" id="o-wrz" transform="translate(720, 468)">
-            <circle r="8.5" fill="none" stroke="#c49000" stroke-width="2.5"/>
-            <text x="0" y="-12" text-anchor="middle" fill="#c49000" font-family="Caveat,cursive" font-size="12" font-weight="700">Z</text>
-          </g>
-          <g class="xo-off" id="o-qb" transform="translate(400, 520)">
-            <circle r="9" fill="none" stroke="#60a0ff" stroke-width="2.5"/>
-            <text x="0" y="3" text-anchor="middle" fill="#60a0ff" font-family="JetBrains Mono" font-size="8" font-weight="700">QB</text>
-          </g>
-
-          <!-- Ball -->
-          <ellipse id="ball" cx="400" cy="470" rx="4.5" ry="3" fill="#c49000" stroke="#8B6914" stroke-width=".8"/>
-        </svg>
-      </div>
-
-      <!-- Play chyron overlay -->
-      <div class="play-chyron" id="play-chyron"></div>
-
-      <!-- Tickers -->
-      <div class="ticker-bar">
-        <div class="ticker-row props">
-          <div class="ticker-item"><span class="t-label">Mahomes Pass Yds</span><span class="t-val" id="tk-mah-yds">187</span><span class="t-line">O/U 274.5</span></div>
-          <div class="ticker-item"><span class="t-label">Kelce Rec</span><span class="t-val" id="tk-kel-rec">4</span><span class="t-line">O/U 5.5</span></div>
-          <div class="ticker-item"><span class="t-label">Pacheco Rush</span><span class="t-val" id="tk-pac-rush">42</span><span class="t-line">O/U 58.5</span></div>
-        </div>
-        <div class="ticker-row fantasy">
-          <div class="ticker-item"><span class="t-label">PPR</span></div>
-          <div class="ticker-item"><span class="t-label">Mahomes</span><span class="t-val" id="tk-f-mah">14.2</span></div>
-          <div class="ticker-item"><span class="t-label">Kelce</span><span class="t-val" id="tk-f-kel">9.8</span></div>
-          <div class="ticker-item"><span class="t-label">Pacheco</span><span class="t-val" id="tk-f-pac">7.4</span></div>
-          <div class="ticker-item"><span class="t-label">Rice</span><span class="t-val" id="tk-f-rice">8.2</span></div>
-        </div>
-      </div>
+    <div class="product p3">
+      <div class="product-idx">03 / SnapPro</div>
+      <div class="product-name">SnapPro</div>
+      <div class="product-tag">API + correlation engine</div>
+      <p class="product-body">Wraps SnapScore × SnapForm into <code>POST /api/snapscore/predict</code> with a calibrated correlation matrix. Underwrites parlays, lineups, prop combos. B2B distribution surface.</p>
+      <div class="product-meta"><span>OWNER <strong>TB12 (serving)</strong></span><span>STATUS <strong>v1 wrap</strong></span></div>
     </div>
-
-    <!-- RIGHT PANEL: DC + Resolver -->
-    <div class="panel right">
-      <div class="panel-section">
-        <div class="panel-header ph-dc"><span class="live-dot" id="dc-live"></span>DC AGENT &middot; Defensive Coordinator</div>
-        <div class="panel-persona">Steve Spagnuolo &middot; coverage &amp; pressure</div>
-        <div class="panel-stream" id="dc-stream"></div>
-      </div>
-      <div class="panel-section">
-        <div class="panel-header ph-res"><span class="live-dot" id="res-live"></span>PLAY RESOLVER &middot; Statistical</div>
-        <div class="panel-persona">300K-play calibrated &middot; &lt;5ms</div>
-        <div class="panel-stream" id="resolver-stream"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Agent pipeline graph -->
-  <div class="agent-graph">
-    <div class="graph-label">Agent Pipeline</div>
-    <div class="graph-nodes">
-      <div class="gnode" data-id="hist"><div class="gn-dot">DATA</div><div class="gn-label">Historical + Form</div></div>
-      <div class="gedge" id="ge-0"></div>
-      <div class="gnode" data-id="oc"><div class="gn-dot">OC</div><div class="gn-label">Play Call</div></div>
-      <div class="gedge" id="ge-1"></div>
-      <div class="gnode" data-id="dc"><div class="gn-dot">DC</div><div class="gn-label">Coverage</div></div>
-      <div class="gedge" id="ge-2"></div>
-      <div class="gnode" data-id="qb"><div class="gn-dot">QB</div><div class="gn-label">Audible</div></div>
-      <div class="gedge" id="ge-3"></div>
-      <div class="gnode" data-id="res"><div class="gn-dot">RES</div><div class="gn-label">Resolve</div></div>
-      <div class="gedge" id="ge-4"></div>
-      <div class="gnode" data-id="out"><div class="gn-dot">OUT</div><div class="gn-label">Result</div></div>
-    </div>
-    <div class="graph-status">Drive <span id="gs-drive">1</span> &middot; Play <span id="gs-play">1</span>/6</div>
-  </div>
-
-  <!-- Interactive controls -->
-  <div class="controls">
-    <div class="controls-left">
-      <div class="control-slider"><label>Run Rate <span><span class="val" id="cv-run">38%</span><span class="dflt">(default 38)</span></span></label><input type="range" id="cs-run" min="20" max="60" value="38"></div>
-      <div class="control-slider"><label>Blitz Rate <span><span class="val" id="cv-blitz">32%</span><span class="dflt">(default 32)</span></span></label><input type="range" id="cs-blitz" min="15" max="50" value="32"></div>
-      <div class="control-slider"><label>Tempo (plays/game) <span><span class="val" id="cv-tempo">67</span><span class="dflt">(default 67)</span></span></label><input type="range" id="cs-tempo" min="55" max="80" value="67"></div>
-    </div>
-    <div class="controls-right">
-      <button class="reset-btn" id="reset-btn">Reset</button>
-      <button class="run-btn primary" id="run-btn">Run Drive</button>
+    <div class="product p4">
+      <div class="product-idx">04 / NFLooker</div>
+      <div class="product-name">NFLooker</div>
+      <div class="product-tag">Domain-explanation LLM</div>
+      <p class="product-body">A small fine-tuned model that explains every prediction in plain English. <code>/explain</code>, <code>/reason</code>, <code>/simulate</code> endpoints. Trained on SnapScore's SHAP traces + sourced corpus.</p>
+      <div class="product-meta"><span>OWNER <strong>Modeling + LLM lane</strong></span><span>STATUS <strong>Spec'd</strong></span></div>
     </div>
   </div>
 </section>
 
-<!-- ========== SECTION 3: SYSTEMS ========== -->
-<section class="systems section-fade" id="systems">
-  <div class="systems-header">
-    <h2>Three systems. One feedback loop.</h2>
-    <p>Process prediction feeds the simulator. The simulator discovers features. The features improve the prediction.</p>
+<section class="s fade-in" id="pipeline">
+  <div class="s-head">
+    <div class="kicker">How it works · Six stages, idempotent</div>
+    <h2>Ingest → Validate → Freeze → Features → Harness → Models</h2>
+    <p>Every stage is re-runnable. Every stage refuses to start if the upstream stage failed. The validator hard-fails the pipeline before bad data reaches modeling.</p>
   </div>
-  <div class="sys-detail">
-    <div class="sys-tag live">Shipping</div>
-    <div class="sys-body">
-      <h3>PARIS &middot; Process-Based Prediction</h3>
-      <p>115 feature calculators across 5 layers: context, Vegas, team process, tracking data, player process. EPA per dropback. Yards per route run. Completion probability over expected.</p>
-      <p class="callout">Constitutional rule: no feature can be a historical average of the stat being predicted.</p>
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div>
+        <div class="pipe-num">01 / INGEST</div>
+        <div class="pipe-name">nflreadpy</div>
+        <p class="pipe-desc">Pull 27 nflverse sources for 2016 → current NFL season. Auto-derives season range from today's date so a 2026 ingest just works.</p>
+      </div>
+      <div class="pipe-stat">~46s · 484K PBP rows</div>
     </div>
-  </div>
-  <div class="sys-detail">
-    <div class="sys-tag live">Shipping</div>
-    <div class="sys-body">
-      <h3>DENVER &middot; Autonomous Experimentation</h3>
-      <p>40 experiments per night against a frozen oracle and constitutional checker. Improvements kept, regressions reverted. The Poisson breakthrough that halved TD error came from Experiment 23 at 2 AM.</p>
+    <div class="pipe-step">
+      <div>
+        <div class="pipe-num">02 / VALIDATE</div>
+        <div class="pipe-name">3-layer validator</div>
+        <p class="pipe-desc">Schema drift (added/removed/dtype-changed cols), coverage invariants (per-season weeks, dual-schema integrity), in-season currency. Hard-fails on regression.</p>
+      </div>
+      <div class="pipe-stat">14 live-critical sources</div>
     </div>
-  </div>
-  <div class="sys-detail">
-    <div class="sys-tag building">Building</div>
-    <div class="sys-body">
-      <h3>TOKYO &middot; Multi-Agent Game Simulation</h3>
-      <p>AI coordinator agents carry real tendencies. They play each other snap by snap. A statistical resolver &mdash; calibrated on 300K+ real plays &mdash; decides every outcome. 1,000 runs yields full distributions.</p>
-      <p class="callout">The LLM decides what play to call. The math decides what happens.</p>
+    <div class="pipe-step">
+      <div>
+        <div class="pipe-num">03 / FREEZE</div>
+        <div class="pipe-name">Two-tier slice</div>
+        <p class="pipe-desc">Predicate-based filtering carves out validation (2024 wks 9+) and holdout (2025 entire). Two anti-leak invariants enforced. Stale parquets unlinked.</p>
+      </div>
+      <div class="pipe-stat">21 sources × 2 slices</div>
+    </div>
+    <div class="pipe-step">
+      <div>
+        <div class="pipe-num">04 / FEATURES</div>
+        <div class="pipe-name">Layer 0 + 1 (M3 adds 2/3/4)</div>
+        <p class="pipe-desc">Layer 0 = id-keys + target. Layer 1 = lagged player-game features (last-game, last-3, season-to-date) + team-change indicator. Anti-leakage gate at build time.</p>
+      </div>
+      <div class="pipe-stat">19+ features per QB-week</div>
+    </div>
+    <div class="pipe-step">
+      <div>
+        <div class="pipe-num">05 / HARNESS</div>
+        <div class="pipe-name">Walk-forward CV</div>
+        <p class="pipe-desc">Predict at (S, W) using only data with (season &lt; S) OR (season == S AND week &lt; W). Imputer + scaler fit per fold. 17 boundary tests pin the contract.</p>
+      </div>
+      <div class="pipe-stat">14 folds · 2024 wks 9-22</div>
+    </div>
+    <div class="pipe-step">
+      <div>
+        <div class="pipe-num">06 / MODELS</div>
+        <div class="pipe-name">Ridge → XGBoost</div>
+        <p class="pipe-desc">Same harness, plug-in models. Ridge for the linear floor; XGBoost with target-aware objective (squared-error for yards, count:poisson for TDs).</p>
+      </div>
+      <div class="pipe-stat">8 (position × target) baselines</div>
     </div>
   </div>
 </section>
 
-<!-- ========== SECTION 4: PROOF ========== -->
-<section class="proof section-fade" id="proof">
-  <div class="container">
-    <div class="proof-header">
-      <h2>Quarantined 2024 results</h2>
-      <p>Weeks 9&ndash;18. Held out day one. No leakage. No look-ahead.</p>
+<section class="s fade-in" id="proof">
+  <div class="s-head">
+    <div class="kicker">M2 baseline · Walk-forward CV · 2024 wks 9-22</div>
+    <h2>Numbers, not narratives.</h2>
+    <p>Honest unfiltered baseline on the 2024 validation slice. The Ridge ↔ XGB gap is small because both models share the same 19-feature lagged-only surface — M3 adds Layer 2 (EPA + CPOE), Layer 3 (NGS aggregates), Layer 4 (opponent quality + Vegas). Then trees pull ahead.</p>
+  </div>
+  <div class="proof-wrap">
+    <div class="proof-head">
+      <div class="ph-title">M1 Ridge ↔ M2 XGBoost</div>
+      <div class="ph-sub">14 folds · holdout 2025 quarantined · codex-audited</div>
     </div>
-    <div class="proof-stats">
-      <div class="proof-stat"><div class="ps-num">3.97%</div><div class="ps-label">QB Passing Yards</div><div class="ps-ctx">error rate</div></div>
-      <div class="proof-stat"><div class="ps-num">5.80%</div><div class="ps-label">RB Rushing Yards</div><div class="ps-ctx">error rate</div></div>
-      <div class="proof-stat"><div class="ps-num">6.71%</div><div class="ps-label">WR Receiving Yards</div><div class="ps-ctx">error rate</div></div>
-      <div class="proof-stat"><div class="ps-num">7.87%</div><div class="ps-label">TE Receiving Yards</div><div class="ps-ctx">error rate</div></div>
-    </div>
-    <div class="proof-baseline">Industry standard: <strong>15&ndash;25% error</strong>. All four positions below the 10% Golden Metric.</div>
-    <div class="proof-meta">
-      <div class="proof-meta-item"><div class="pm-num">43,564</div><div class="pm-label">Player-games (8 seasons)</div></div>
-      <div class="proof-meta-item"><div class="pm-num">115</div><div class="pm-label">Process calculators</div></div>
-      <div class="proof-meta-item"><div class="pm-num">40/night</div><div class="pm-label">Autonomous experiments</div></div>
-      <div class="proof-meta-item"><div class="pm-num">20+</div><div class="pm-label">Versions shipped</div></div>
+    <table class="proof-table">
+      <thead>
+        <tr><th>Position × Target</th><th style="text-align:right">n</th><th style="text-align:right">Ridge MAE</th><th style="text-align:right">XGB MAE</th><th style="text-align:right">Δ MAE %</th><th>Winner</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="pos">QB × passing_yards</td><td class="num">395</td><td class="num">67.05</td><td class="num">64.54</td><td class="num">−3.74%</td><td class="winner">XGB</td></tr>
+        <tr><td class="pos">QB × passing_tds</td><td class="num">395</td><td class="num">0.86</td><td class="num">0.85</td><td class="num">−0.95%</td><td class="winner">XGB</td></tr>
+        <tr><td class="pos">RB × rushing_yards</td><td class="num">906</td><td class="num">19.79</td><td class="num">19.92</td><td class="num">+0.64%</td><td class="winner">Ridge</td></tr>
+        <tr><td class="pos">RB × rushing_tds</td><td class="num">906</td><td class="num">0.34</td><td class="num">0.34</td><td class="num">−0.84%</td><td class="winner tie">≈ tie</td></tr>
+        <tr><td class="pos">WR × receiving_yards</td><td class="num">1,457</td><td class="num">20.92</td><td class="num">20.76</td><td class="num">−0.74%</td><td class="winner">XGB</td></tr>
+        <tr><td class="pos">WR × receiving_tds</td><td class="num">1,457</td><td class="num">0.32</td><td class="num">0.32</td><td class="num">−0.03%</td><td class="winner tie">≈ tie</td></tr>
+        <tr><td class="pos">TE × receiving_yards</td><td class="num">734</td><td class="num">15.39</td><td class="num">15.41</td><td class="num">+0.12%</td><td class="winner tie">≈ tie</td></tr>
+        <tr><td class="pos">TE × receiving_tds</td><td class="num">734</td><td class="num">0.27</td><td class="num">0.27</td><td class="num">−0.51%</td><td class="winner tie">≈ tie</td></tr>
+      </tbody>
+    </table>
+    <div class="proof-foot">
+      MAE in target units (yards or TDs). XGB target-aware objective: <strong>reg:squarederror</strong> for yards, <strong>count:poisson</strong> for TDs. Independent codex audit verified the leakage gate runs before fit, XGB is instantiated fresh per fold, predictions stay non-negative on TD targets, and comparison numbers match the per-target JSONs.
     </div>
   </div>
 </section>
 
-<!-- ========== SECTION 5: THE ASK ========== -->
-<section class="the-ask section-fade" id="ask">
-  <h2>What we're building next</h2>
-  <div class="ask-grid">
-    <div class="ask-col">
-      <h3>The Raise</h3>
-      <div class="ask-item"><span class="ask-n">1</span><p><strong>Complete the simulator</strong>&mdash;7 subsystems, hybrid LLM-statistical architecture</p></div>
-      <div class="ask-item"><span class="ask-n">2</span><p><strong>Scale AutoResearch</strong>&mdash;200+ experiments/night, more architectures</p></div>
-      <div class="ask-item"><span class="ask-n">3</span><p><strong>Build the API</strong>&mdash;productionize predictions for B2B customers</p></div>
-      <div class="ask-item"><span class="ask-n">4</span><p><strong>Full-season simulation</strong>&mdash;every 2026 game before it starts</p></div>
-      <div class="ask-item"><span class="ask-n">5</span><p><strong>Hire domain experts</strong>&mdash;validate coaching agents against real NFL</p></div>
+<section class="s fade-in">
+  <div class="s-head">
+    <div class="kicker">Out-of-time test · Sacred ship-gate</div>
+    <h2>2025 is locked in a vault.</h2>
+  </div>
+  <div class="holdout">
+    <div class="holdout-stat">
+      <div class="hs-big">2025</div>
+      <div class="hs-mid">Holdout season</div>
+      <div class="hs-small">285 games · 48,771 PBP rows<br>517,851 depth-chart events<br>quarantined since M0</div>
     </div>
-    <div class="ask-col">
-      <h3>Revenue Model</h3>
-      <div class="ask-item"><span class="ask-n">&middot;</span><p><strong>B2B data licensing</strong>&mdash;distributions to DFS, sportsbooks, media</p></div>
-      <div class="ask-item"><span class="ask-n">&middot;</span><p><strong>Simulation-as-a-Service</strong>&mdash;submit matchup, get player distributions</p></div>
-      <div class="ask-item"><span class="ask-n">&middot;</span><p><strong>Consumer tools</strong>&mdash;lineup optimizer, prop analysis with hit probabilities</p></div>
-      <div class="ask-item"><span class="ask-n">&middot;</span><p><strong>Multi-sport expansion</strong>&mdash;NFL first, then NBA, MLB</p></div>
+    <div class="holdout-body">
+      <h3>The AutoResearch loop never reads holdout. Period.</h3>
+      <p>Every Ridge fit, every XGBoost fit, every walk-forward fold during the modeling loop sees only the training surface (2016–2024 minus the 2024 wks 9+ validation slice). The 2025 season is physically separated into <em>data/holdout_2025/</em>, frozen at M0, and read exactly once — at the explicit ship-gate before SnapScore reaches production traffic.</p>
+      <p>Belt + suspenders: <em>run_baseline.py</em> drops <em>season == 2025</em> from the input frame BEFORE the harness even sees it. The harness's <em>walk_forward_splits</em> filters again. <em>holdout_seasons</em> is honored by both walk-forward and season-rollover splits. Three independent gates, all enforced.</p>
     </div>
   </div>
-  <div class="kpi-bar">
-    <div class="kpi"><div class="kpi-label">Composite Error</div><div class="kpi-row"><span class="kpi-now">~15%</span><span class="kpi-arr">&rarr;</span><span class="kpi-target">&lt;10%</span></div></div>
-    <div class="kpi"><div class="kpi-label">TD Error</div><div class="kpi-row"><span class="kpi-now">~40%</span><span class="kpi-arr">&rarr;</span><span class="kpi-target">&lt;15%</span></div></div>
-    <div class="kpi"><div class="kpi-label">Sims/Week</div><div class="kpi-row"><span class="kpi-now">0</span><span class="kpi-arr">&rarr;</span><span class="kpi-target">1,000+</span></div></div>
-    <div class="kpi"><div class="kpi-label">B2B Pilots</div><div class="kpi-row"><span class="kpi-now">0</span><span class="kpi-arr">&rarr;</span><span class="kpi-target">3&ndash;5</span></div></div>
-    <div class="kpi"><div class="kpi-label">Experiments/Night</div><div class="kpi-row"><span class="kpi-now">40</span><span class="kpi-arr">&rarr;</span><span class="kpi-target">200+</span></div></div>
+</section>
+
+<section class="s fade-in" id="roadmap">
+  <div class="s-head">
+    <div class="kicker">Milestones · Tagged in git, dated to the day</div>
+    <h2>Greenfield to baseline in 24 hours.</h2>
+    <p>Each milestone has a tag, an architecture spec, and an independent codex audit. M0 → M2 shipped in roughly a working day. M3+ adds the feature surface that makes XGBoost actually pull ahead.</p>
+  </div>
+  <div class="roadmap">
+    <div class="r-step done"><div class="r-id">M0</div><div class="r-icon"></div><div class="r-name">Data layer</div><div class="r-desc">27 sources, 3-layer validator, two-tier eval, full architecture spec.</div></div>
+    <div class="r-step done"><div class="r-id">M1</div><div class="r-icon"></div><div class="r-name">Eval harness</div><div class="r-desc">Walk-forward CV, anti-leakage gate, Ridge baseline, first projection_error.</div></div>
+    <div class="r-step done"><div class="r-id">M2</div><div class="r-icon"></div><div class="r-name">XGBoost</div><div class="r-desc">Same harness, target-aware objective. Ridge ↔ XGB comparison artifact.</div></div>
+    <div class="r-step now"><div class="r-id">M3</div><div class="r-icon"></div><div class="r-name">Layers 2/3/4</div><div class="r-desc">EPA + CPOE, NGS weekly aggregates, opponent quality, Vegas lines.</div></div>
+    <div class="r-step"><div class="r-id">M_serve</div><div class="r-icon"></div><div class="r-name">Live snapshot</div><div class="r-desc">Per-game point-in-time snapshot layer with max-staleness contract per source.</div></div>
+    <div class="r-step"><div class="r-id">M_inf</div><div class="r-icon"></div><div class="r-name">Spatiotemporal</div><div class="r-desc">Big Data Bowl tracking, GNN/RNN — keep iff it doesn't degrade the harness baseline.</div></div>
+  </div>
+</section>
+
+<section class="s fade-in">
+  <div class="s-head">
+    <div class="kicker">Engineering principles · Not negotiable</div>
+    <h2>The boring stuff that makes the predictions trustworthy.</h2>
+  </div>
+  <div class="principles">
+    <div class="principle">
+      <h4>Anti-leakage at split-time</h4>
+      <p>The walk-forward harness invokes the leakage validator BEFORE the first fit. Any feature pipeline that references a participation column, a post-game PBP outcome, or measured weather/officials hard-fails when <code>live=true</code>. 16 tests pin the block list against the actual <code>participation.parquet</code> schema.</p>
+      <div class="pmono">eval/leakage.py · 4 surfaces</div>
+    </div>
+    <div class="principle">
+      <h4>Schema-drift validator</h4>
+      <p>Every ingest writes a baseline schema. Future ingests diff against it: removed columns, dtype changes, missing seasons, missing weeks per season, depth-charts dual-schema invariants. In-season runs additionally check 14 live-critical sources for currency.</p>
+      <div class="pmono">scripts/validate_raw.py · 3 layers</div>
+    </div>
+    <div class="principle">
+      <h4>Walk-forward correctness</h4>
+      <p>Predict at (season S, week W) reads ONLY rows where (season &lt; S) OR (season == S AND week &lt; W). Imputer + scaler fit on each fold's train rows separately — no global statistics leak across folds. 17 boundary tests prevent regressions.</p>
+      <div class="pmono">eval/harness.py · tests/test_harness.py</div>
+    </div>
+    <div class="principle">
+      <h4>Independent codex audits</h4>
+      <p>Every milestone gets reviewed by a different LLM (OpenAI codex) with adversarial intent. M0 had 5 review rounds; M1 had 1; M2 had 1. Every CRITICAL/HIGH finding closed before tag. The modeling lane doesn't self-approve.</p>
+      <div class="pmono">m0-complete · m1-codex-pass · m2-xgboost</div>
+    </div>
   </div>
 </section>
 
 <footer>
-  <p class="ft">Process-based prediction. Autonomous experimentation. Simulated football.</p>
-  <p>The first system that understands the game, not just the stats.</p>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a class="logo" href="/">Snap<span>count</span></a>
+      <p>Multi-agent NFL prediction + sports betting infrastructure. Built greenfield from PRD intent. Walk-forward verified. 2025 quarantined.</p>
+    </div>
+    <div class="footer-col">
+      <h5>Product</h5>
+      <a href="#products">SnapScore</a>
+      <a href="#products">SnapForm</a>
+      <a href="#products">SnapPro</a>
+      <a href="#products">NFLooker</a>
+    </div>
+    <div class="footer-col">
+      <h5>Read</h5>
+      <a href="/architecture.html">Architecture</a>
+      <a href="/story.html">Story</a>
+      <a href="/slides.html">Slides</a>
+      <a href="#proof">Numbers</a>
+    </div>
+    <div class="footer-col">
+      <h5>Build</h5>
+      <a href="https://github.com/thetangstr/tokyo-v2" target="_blank">GitHub</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="mailto:hello@snapcount.ai">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bot">
+    <span>© 2026 Snapcount · greenfield, agent-orchestrated</span>
+    <span>m2-xgboost · 33/33 tests · 5 codex rounds</span>
+  </div>
 </footer>
 
-<!-- ========== ENGINE DETAIL MODALS ========== -->
-<div class="modal-backdrop" id="modal-backdrop"></div>
-
-<!-- MODAL: PROCESS -->
-<div class="engine-modal" id="modal-process" role="dialog" aria-modal="true" aria-labelledby="mp-title">
-  <div class="modal-scroll">
-    <button class="modal-close" aria-label="Close">&times;</button>
-    <div class="modal-hero process">
-      <div class="m-index">Engine 01 &middot; Historical Intelligence</div>
-      <h2 id="mp-title"><span class="m-icon">&#128640;</span>PROCESS</h2>
-      <p class="modal-tagline">"Eight seasons of NFL tape, compressed into 115 features the box score never captured."</p>
-    </div>
-    <div class="modal-body">
-      <section>
-        <h3>How it works</h3>
-        <ul class="check-list">
-          <li><strong>Ingest eight seasons</strong> of play-by-play, PFF grades, and next-gen tracking. 300K+ plays, 43,564 player-games.</li>
-          <li><strong>Engineer 115 process features</strong> across five layers &mdash; every calculator measures <em>how</em> a stat was generated, not <em>what</em> stat was generated.</li>
-          <li><strong>Train ensemble models</strong> per position and stat type. Poisson for scoring events. Regression for volume. All gated by a constitutional checker.</li>
-          <li><strong>Constitutional rule:</strong> no feature can be a historical average of the stat being predicted. The constraint makes backtests worse and real prediction better.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h3>Feature Architecture (5 Layers)</h3>
-        <div class="arch-layers">
-          <div class="arch-layer l1"><div class="al-tag">L1 Context</div><div class="al-desc">Game script, weather, rest days, travel, short-week penalties. Situational scaffolding.</div></div>
-          <div class="arch-layer l2"><div class="al-tag">L2 Vegas</div><div class="al-desc">Implied totals, spreads, line movement. A market consensus we use as a prior &mdash; then try to beat.</div></div>
-          <div class="arch-layer l3"><div class="al-tag">L3 Team Process</div><div class="al-desc">EPA per dropback, success rate, neutral pace, pass-over-expected. How teams generate value.</div></div>
-          <div class="arch-layer l4"><div class="al-tag">L4 Tracking</div><div class="al-desc">Air yards, separation, pressure rate, time-to-throw. What the body-cams actually saw.</div></div>
-          <div class="arch-layer l5"><div class="al-tag">L5 Player Process</div><div class="al-desc">Route participation, yards per route run, targets per route run, pressure evasion. Usage-normalized.</div></div>
-        </div>
-      </section>
-
-      <section>
-        <h3>Performance on quarantined 2024 data</h3>
-        <div class="modal-stats">
-          <div class="mstat green"><div class="ms-num">3.97%</div><div class="ms-label">QB Pass Yds</div><div class="ms-ctx">error rate</div></div>
-          <div class="mstat green"><div class="ms-num">5.80%</div><div class="ms-label">RB Rush Yds</div><div class="ms-ctx">error rate</div></div>
-          <div class="mstat green"><div class="ms-num">6.71%</div><div class="ms-label">WR Rec Yds</div><div class="ms-ctx">error rate</div></div>
-          <div class="mstat green"><div class="ms-num">7.87%</div><div class="ms-label">TE Rec Yds</div><div class="ms-ctx">error rate</div></div>
-        </div>
-      </section>
-
-      <section>
-        <h3>Sample output</h3>
-        <div class="sample-box">
-          <div class="s-label">Mahomes &middot; Week 7 &middot; KC @ SF</div>
-          <span class="s-value">Pass Yds: <em>&mu; = 274.1</em> &middot; &sigma; = 42 &middot; P(over 274.5) = <em>0.48</em></span><br>
-          <span class="s-value">Pass TDs: <em>&mu; = 2.1</em> &middot; Poisson &lambda; = 2.08 &middot; P(&ge;3) = <em>0.27</em></span><br>
-          <span class="s-value">INT: <em>&mu; = 0.8</em> &middot; P(0 INT) = 0.43</span>
-        </div>
-      </section>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: FORM -->
-<div class="engine-modal" id="modal-form" role="dialog" aria-modal="true" aria-labelledby="mf-title">
-  <div class="modal-scroll">
-    <button class="modal-close" aria-label="Close">&times;</button>
-    <div class="modal-hero form">
-      <div class="m-index">Engine 02 &middot; Who's Rolling This Week</div>
-      <h2 id="mf-title"><span class="m-icon">&#128202;</span>FORM</h2>
-      <p class="modal-tagline">"Last four games weigh more than last four seasons. Injuries land in the model before they land on Twitter."</p>
-    </div>
-    <div class="modal-body">
-      <section>
-        <h3>How it works</h3>
-        <ul class="check-list">
-          <li><strong>Pull six live streams</strong> in parallel &mdash; NFL play-by-play, PFF grades, Vegas lines, injury reports, weather, tracking data.</li>
-          <li><strong>Weight by recency.</strong> Exponential decay: the last 4 games carry 3&times; the weight of games 5&ndash;8. Games from 2 seasons ago barely move the needle.</li>
-          <li><strong>Form deltas, not raw numbers.</strong> We don't re-predict from recent data &mdash; we compute a delta that nudges the ML baseline. Keeps the 8-year foundation intact.</li>
-          <li><strong>Injury cascade.</strong> When a starter drops, downstream snap-share and target-share shift within minutes &mdash; no human touch required.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h3>Live Data Sources</h3>
-        <div class="sources-grid">
-          <div class="src-card"><div class="src-name">NFL Play-by-Play</div><div class="src-desc">Every snap, live. Drives context, success rate, pace.</div><div class="src-freq">Real-time &middot; in-game latency &lt;5s</div></div>
-          <div class="src-card"><div class="src-name">PFF Grades</div><div class="src-desc">Film-reviewed player grades. Inputs &mdash; not the predictions we're replacing.</div><div class="src-freq">Weekly &middot; Tuesday post-MNF</div></div>
-          <div class="src-card"><div class="src-name">Vegas Lines</div><div class="src-desc">Spreads, totals, props. Used as prior &mdash; we feed deltas from this baseline.</div><div class="src-freq">Real-time &middot; tick-by-tick movement</div></div>
-          <div class="src-card"><div class="src-name">Injury Reports</div><div class="src-desc">NFL.com, team Twitter, reporter feeds. Probable / questionable / out.</div><div class="src-freq">Hourly &middot; &lt;1h lag to forecast</div></div>
-          <div class="src-card"><div class="src-name">Weather</div><div class="src-desc">Wind, precip, temp at kickoff. Drives kicker and deep-ball adjustments.</div><div class="src-freq">24h / 6h / kickoff refresh</div></div>
-          <div class="src-card"><div class="src-name">Next-Gen Tracking</div><div class="src-desc">Separation, air yards, pressure rate. Route- and snap-normalized.</div><div class="src-freq">Post-game &middot; full chip-in-pads feed</div></div>
-        </div>
-      </section>
-
-      <section>
-        <h3>How recency is weighted</h3>
-        <div class="modal-stats">
-          <div class="mstat blue"><div class="ms-num">4 gm</div><div class="ms-label">Rolling window</div><div class="ms-ctx">primary form signal</div></div>
-          <div class="mstat blue"><div class="ms-num">3&times;</div><div class="ms-label">Recent weight</div><div class="ms-ctx">vs games 5&ndash;8</div></div>
-          <div class="mstat blue"><div class="ms-num">&lt;1h</div><div class="ms-label">Injury lag</div><div class="ms-ctx">news &rarr; forecast</div></div>
-          <div class="mstat blue"><div class="ms-num">6</div><div class="ms-label">Live streams</div><div class="ms-ctx">parallel ingest</div></div>
-        </div>
-      </section>
-
-      <section>
-        <h3>Sample form adjustment</h3>
-        <div class="sample-box form-sample">
-          <div class="s-label">Kelce &middot; Week 7 &middot; mid-season adjustment</div>
-          <span class="s-value">Base projection (8-yr model): <em>72 rec yds</em></span><br>
-          <span class="s-value">Form delta: <em>+14 yds</em> &middot; 4-game YPRR +18%, target share +2.4pp</span><br>
-          <span class="s-value">Opponent form: <em>-3 yds</em> &middot; SF TE allowed rate trending down 3 weeks</span><br>
-          <span class="s-value">Adjusted: <em>83 rec yds</em></span>
-        </div>
-      </section>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: CHESS -->
-<div class="engine-modal" id="modal-chess" role="dialog" aria-modal="true" aria-labelledby="mc-title">
-  <div class="modal-scroll">
-    <button class="modal-close" aria-label="Close">&times;</button>
-    <div class="modal-hero chess">
-      <div class="m-index">Engine 03 &middot; Adversarial Simulation</div>
-      <h2 id="mc-title"><span class="m-icon">&#9822;</span>CHESS</h2>
-      <p class="modal-tagline">"Two LLM coordinators, a QB agent, and a statistical resolver &mdash; calling real plays at each other, snap by snap, a thousand times."</p>
-    </div>
-    <div class="modal-body">
-      <section>
-        <h3>How it works</h3>
-        <ul class="check-list">
-          <li><strong>LLM agents carry real tendencies.</strong> OC prompts are built from career play-call distributions: Shanahan's outside zone rate, Reid's RPO rate, red-zone splits, down-and-distance personnel.</li>
-          <li><strong>Snap sequence:</strong> OC calls play &rarr; DC calls coverage &rarr; QB reads and optionally audibles &rarr; resolver computes outcome statistically.</li>
-          <li><strong>The resolver is math, not a coin flip.</strong> Calibrated on 300K+ real plays, it samples from the conditional distribution P(yards | play, coverage, personnel, field position, time). &lt;5ms per play.</li>
-          <li><strong>1,000 runs = distribution.</strong> Each sim produces a box score. 1,000 sims produce a full probability distribution per player &mdash; not a point estimate.</li>
-          <li><strong>Feedback loop:</strong> simulation surfaces weird features humans wouldn't engineer. Those features re-enter the prediction model. The model improves the simulator.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h3>Agent Roster</h3>
-        <div class="agents-grid">
-          <div class="agent-card oc-a">
-            <div class="ac-head"><span class="ac-name">OC Agent</span><span class="ac-role">Offense</span></div>
-            <div class="ac-desc">Offensive coordinator persona. Picks personnel, formation, play call from situation and tendencies.</div>
-            <div class="ac-example">"Heavy box. Running it into a light front."</div>
-          </div>
-          <div class="agent-card dc-a">
-            <div class="ac-head"><span class="ac-name">DC Agent</span><span class="ac-role">Defense</span></div>
-            <div class="ac-desc">Defensive coordinator persona. Calls coverage and pressure based on down, distance, personnel grouping.</div>
-            <div class="ac-example">"Cover 2, bracket WR1. Don't let Z get behind us."</div>
-          </div>
-          <div class="agent-card qb-a">
-            <div class="ac-head"><span class="ac-name">QB Agent</span><span class="ac-role">Field General</span></div>
-            <div class="ac-desc">Pre-snap read and audible logic. Can override OC's call if the coverage is obvious.</div>
-            <div class="ac-example">"Single-high, blitz coming. Hot route to the slot."</div>
-          </div>
-          <div class="agent-card res-a">
-            <div class="ac-head"><span class="ac-name">Resolver</span><span class="ac-role">Statistical</span></div>
-            <div class="ac-desc">Calibrated conditional sampler. Inputs: all four prior calls + game state. Output: yards, EPA, TD flag.</div>
-            <div class="ac-example">Comp: 0.78 &middot; Yds: 14 &middot; EPA: +1.8</div>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <h3>Simulation engine</h3>
-        <div class="modal-stats">
-          <div class="mstat"><div class="ms-num">4+</div><div class="ms-label">Agent types</div><div class="ms-ctx">per snap</div></div>
-          <div class="mstat"><div class="ms-num">1,000&times;</div><div class="ms-label">Sims / matchup</div><div class="ms-ctx">full distribution</div></div>
-          <div class="mstat"><div class="ms-num">&lt;5ms</div><div class="ms-label">Resolver latency</div><div class="ms-ctx">per play</div></div>
-          <div class="mstat"><div class="ms-num">300K+</div><div class="ms-label">Plays calibrated</div><div class="ms-ctx">resolver training</div></div>
-        </div>
-      </section>
-
-      <section>
-        <h3>Sample distribution output</h3>
-        <div class="sample-box chess-sample">
-          <div class="s-label">Mahomes &middot; KC @ SF &middot; 1,000 simulated games</div>
-          <span class="s-value">Pass Yds: 20th pct <em>218</em> &middot; median <em>262</em> &middot; 80th pct <em>308</em></span><br>
-          <span class="s-value">Pass TDs: P(&ge;1) <em>0.92</em> &middot; P(&ge;2) <em>0.68</em> &middot; P(&ge;3) <em>0.27</em></span><br>
-          <span class="s-value">Game Script: SF leads mid-3rd in <em>58%</em> of sims &mdash; Mahomes pass volume skews higher in those</span><br>
-          <span class="s-value">Fantasy PPR: <em>&mu; = 21.4</em> &middot; &sigma; = 6.8 &middot; P(start-worthy, &ge;18) = <em>0.65</em></span>
-        </div>
-      </section>
-    </div>
-  </div>
-</div>
-
 <script>
-// ========== UTILITIES ==========
-function delay(ms){
-  return new Promise(resolve=>{
-    const start=performance.now();
-    function check(){
-      if(document.hidden){requestAnimationFrame(check);return;}
-      if(performance.now()-start>=ms)resolve();
-      else requestAnimationFrame(check);
-    }
-    check();
-  });
-}
-function lerp(a,b,t){return a+(b-a)*t}
-function ease(t){return t<0.5?2*t*t:-1+(4-2*t)*t}
-const REDUCED=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-async function typewrite(elementId,html,speed){
-  speed=speed||22;
-  const el=document.getElementById(elementId);
-  el.innerHTML='';
-  if(REDUCED){el.innerHTML=html;return;}
-  const tokens=[];let i=0;
-  while(i<html.length){
-    if(html[i]==='<'){
-      const end=html.indexOf('>',i);
-      if(end!==-1){tokens.push({type:'tag',content:html.slice(i,end+1)});i=end+1;}
-      else{tokens.push({type:'char',content:html[i]});i++;}
-    }else{tokens.push({type:'char',content:html[i]});i++;}
-  }
-  let output='';
-  for(const token of tokens){
-    output+=token.content;
-    if(token.type==='char'&&token.content!==' '){
-      el.innerHTML=output;
-      const jitter=Math.random()*speed*0.4-speed*0.2;
-      const charSpeed=/[0-9.+]/.test(token.content)?speed*1.4:speed;
-      await delay(charSpeed+jitter);
-    }
-  }
-  el.innerHTML=output;
-}
-
-// ========== FORMATTERS ==========
-function fmtOC(oc){return '<span class="stream-call">'+oc.call+'</span><span class="stream-pers">'+oc.pers+'</span><span class="stream-quote">\u201C'+oc.quote+'\u201D</span>';}
-function fmtDC(dc){return '<span class="stream-call">'+dc.call+'</span><span class="stream-quote">\u201C'+dc.quote+'\u201D</span>';}
-function fmtQB(qb){return '<span class="stream-read">Pre-snap: '+qb.read+'</span><span class="stream-quote">\u201C'+qb.quote+'\u201D</span>';}
-function fmtRes(res){
-  const comp=res.comp!==null?'Completion: <em>'+res.comp+'</em>':'Handoff';
-  return '<span class="stream-stat">'+comp+'</span><span class="stream-stat">Yards: <em>'+res.yds+'</em></span><span class="stream-stat">EPA: <em>'+(res.epa>0?'+':'')+res.epa+'</em></span>'+(res.td?'<span class="stream-td">TOUCHDOWN</span>':'');
-}
-
-// ========== AGENT UI ==========
-function setActive(agent){
-  ['oc','dc','qb','res'].forEach(id=>{
-    const dot=document.getElementById(id+'-live');
-    if(dot)dot.classList.toggle('on',id===agent);
-  });
-}
-
-function setGraphStep(step){
-  // steps: 0=hist,1=oc,2=dc,3=qb,4=res,5=out
-  const order=['hist','oc','dc','qb','res','out'];
-  document.querySelectorAll('.gnode').forEach(n=>n.classList.remove('active','done'));
-  document.querySelectorAll('.gedge').forEach(e=>e.classList.remove('on'));
-  order.forEach((id,i)=>{
-    const n=document.querySelector('.gnode[data-id="'+id+'"]');
-    if(!n)return;
-    if(i<step)n.classList.add('done');
-    else if(i===step)n.classList.add('active');
-  });
-  for(let i=0;i<step;i++){
-    const e=document.getElementById('ge-'+i);
-    if(e)e.classList.add('on');
-  }
-}
-
-function updateBoard(play){
-  document.getElementById('sb-kc').textContent=play.score.kc;
-  document.getElementById('sb-sf').textContent=play.score.sf;
-  document.getElementById('sb-qtr').textContent=play.quarter;
-  document.getElementById('sb-clock').textContent=play.clock;
-  document.getElementById('sb-down').textContent=play.dn;
-  document.getElementById('sb-spot').textContent=play.spot;
-}
-
-function showChyron(text,isTD){
-  const el=document.getElementById('play-chyron');
-  el.textContent=text;
-  el.classList.toggle('td',!!isTD);
-  el.classList.add('show');
-}
-function hideChyron(){document.getElementById('play-chyron').classList.remove('show','td');}
-
-function updateTickers(props,fantasy){
-  const setProp=(id,val,line)=>{
-    const el=document.getElementById(id);
-    el.textContent=val;
-    el.classList.toggle('over',val>=line);
-    el.classList.toggle('under',val<line);
-  };
-  if(props){
-    if(props.mah!==undefined)setProp('tk-mah-yds',props.mah,274.5);
-    if(props.kel!==undefined)setProp('tk-kel-rec',props.kel,5.5);
-    if(props.pac!==undefined)setProp('tk-pac-rush',props.pac,58.5);
-  }
-  if(fantasy){
-    if(fantasy.mah!==undefined)document.getElementById('tk-f-mah').textContent=fantasy.mah.toFixed(1);
-    if(fantasy.kel!==undefined)document.getElementById('tk-f-kel').textContent=fantasy.kel.toFixed(1);
-    if(fantasy.pac!==undefined)document.getElementById('tk-f-pac').textContent=fantasy.pac.toFixed(1);
-    if(fantasy.rice!==undefined)document.getElementById('tk-f-rice').textContent=fantasy.rice.toFixed(1);
-  }
-}
-
-// ========== PLAY DATA ==========
-// Movement format: { playerKey: [sx, sy, ex, ey] }
-// Player keys map to SVG group IDs: offense is "o-<key>", defense is "d-<key>"
-const OFF_KEYS=['c','lg','lt','rg','rt','te','rb','wrx','slot','wrz','qb'];
-const DEF_KEYS=['del','dtl','dtr','der','mlb','wlb','slb','cbl','cbr','fs','ss'];
-
-const BASE_PLAYS=[
-  {dn:'1st & 10',spot:'KC 35',quarter:'Q3',clock:'8:42',score:{kc:10,sf:14},
-    oc:{call:'Shotgun Trips Right, HB Dive',pers:'11 personnel',quote:'Six in the box. SF run D ranked #19, 4.8 YPC allowed L4 \u2014 running it.'},
-    dc:{call:'Cover 3, DE Contain',quote:'Pacheco probable but limp last week. Force inside, pursue.'},
-    qb:{read:'6-man box, safety high',quote:'Confirmed. Handing off to Pacheco.'},
-    res:{comp:null,yds:6,epa:0.3,result:'HB Dive \u2022 Pacheco, 6 yards',td:false},
-    ball:{type:'run',target:'rb'},
-    mov:{c:[400,470,400,463],lg:[365,470,365,463],lt:[330,470,330,462],rg:[435,470,435,462],rt:[470,470,470,463],rb:[365,518,400,440],qb:[400,520,395,505],te:[505,472,540,440],wrz:[720,468,720,430],wrx:[80,468,120,430],slot:[600,468,560,420],del:[338,460,360,475],dtl:[382,460,395,475],dtr:[418,460,410,475],der:[462,460,450,475],mlb:[400,425,400,445],wlb:[335,428,350,440],slb:[465,428,450,440],cbl:[82,450,120,420],cbr:[718,450,718,420],fs:[400,350,400,380],ss:[560,385,480,400]},
-    props:{mah:187,kel:4,pac:48},fantasy:{mah:14.2,kel:9.8,pac:8.0,rice:8.2}},
-  {dn:'2nd & 4',spot:'KC 41',quarter:'Q3',clock:'8:04',score:{kc:10,sf:14},
-    oc:{call:'Under Center, PA Boot Left',pers:'12 personnel',quote:'They bit on the run last play. Boot away from Bosa side. Kelce wide open on the drag.'},
-    dc:{call:'Cover 1 Man, SS Blitz',quote:'Greenlaw out \u2014 SS blitz to compensate. Take away the middle.'},
-    qb:{read:'Single-high, blitz coming',quote:'Hot route to the slot. Throwing quick.'},
-    res:{comp:0.78,yds:14,epa:1.8,result:'Complete to Kelce \u2022 14 yds \u2022 1st down',td:false},
-    ball:{type:'pass',target:'te',arc:22},
-    mov:{c:[400,470,400,463],lg:[365,470,358,463],lt:[330,470,320,462],rg:[435,470,435,463],rt:[470,470,470,463],rb:[365,518,430,475],qb:[400,520,280,490],te:[505,472,300,420],wrz:[720,468,700,320],wrx:[80,468,140,400],slot:[600,468,350,380],del:[338,460,330,490],dtl:[382,460,375,485],dtr:[418,460,425,485],der:[462,460,460,490],mlb:[400,425,380,400],wlb:[335,428,310,445],slb:[465,428,455,440],cbl:[82,450,140,395],cbr:[718,450,700,330],fs:[400,350,400,320],ss:[560,385,440,430]},
-    props:{mah:201,kel:5,pac:48},fantasy:{mah:14.8,kel:12.2,pac:8.0,rice:8.2}},
-  {dn:'1st & 10',spot:'SF 45',quarter:'Q3',clock:'7:28',score:{kc:10,sf:14},
-    oc:{call:'Shotgun Spread, 4 Verticals',pers:'11 personnel',quote:'Across midfield. Two-high shell post-snap. Z deep \u2014 at worst he opens up Kelce underneath.'},
-    dc:{call:'Cover 2, Bracket WR1',quote:'Don\u2019t let Z get behind us. Bracket with safety help over the top.'},
-    qb:{read:'Cover 2, Z bracketed',quote:'They bracketed Z. Checking down. Kelce sitting in the seam.'},
-    res:{comp:0.82,yds:11,epa:0.9,result:'Complete to Kelce \u2022 11 yds \u2022 1st down',td:false},
-    ball:{type:'pass',target:'te',arc:18},
-    mov:{c:[400,470,400,465],lg:[365,470,365,465],lt:[330,470,330,465],rg:[435,470,435,465],rt:[470,470,470,465],rb:[365,518,400,500],qb:[400,520,400,540],te:[505,472,480,380],wrz:[720,468,715,250],wrx:[80,468,85,280],slot:[600,468,580,300],del:[338,460,350,490],dtl:[382,460,390,488],dtr:[418,460,415,488],der:[462,460,450,490],mlb:[400,425,400,395],wlb:[335,428,320,400],slb:[465,428,475,400],cbl:[82,450,90,290],cbr:[718,450,715,260],fs:[400,350,600,250],ss:[560,385,350,300]},
-    props:{mah:212,kel:6,pac:48},fantasy:{mah:15.2,kel:14.3,pac:8.0,rice:8.2}},
-  {dn:'1st & 10',spot:'SF 34',quarter:'Q3',clock:'6:52',score:{kc:10,sf:14},
-    oc:{call:'Pistol, Outside Zone Left',pers:'12 personnel',quote:'Bosa hobbling \u2014 attacking left edge. Cutback lane should be there.'},
-    dc:{call:'Bear Front, MLB Scrape',quote:'Stack the line. Force a bounce. McDuffie inside leverage.'},
-    qb:{read:'Loaded box, McDuffie inside',quote:'Loaded box. Audible \u2014 slant to Rice. McDuffie\u2019s inside.'},
-    res:{comp:0.71,yds:8,epa:0.5,result:'Complete to Rice \u2022 8 yds',td:false},
-    ball:{type:'pass',target:'wrx',arc:14},
-    mov:{c:[400,470,400,465],lg:[365,470,360,465],lt:[330,470,325,465],rg:[435,470,440,465],rt:[470,470,475,465],rb:[365,518,340,475],qb:[400,520,400,535],te:[505,472,550,430],wrz:[720,468,680,420],wrx:[80,468,200,430],slot:[600,468,520,415],del:[338,460,345,490],dtl:[382,460,388,488],dtr:[418,460,412,488],der:[462,460,458,490],mlb:[400,425,320,440],wlb:[335,428,300,445],slb:[465,428,460,440],cbl:[82,450,160,430],cbr:[718,450,685,425],fs:[400,350,380,370],ss:[560,385,500,400]},
-    props:{mah:220,kel:6,pac:48},fantasy:{mah:15.5,kel:14.3,pac:8.0,rice:10.0}},
-  {dn:'2nd & 2',spot:'SF 26',quarter:'Q3',clock:'6:18',score:{kc:10,sf:14},
-    oc:{call:'Shotgun, RPO Glance',pers:'11 personnel',quote:'Read the WILL. Greenlaw\u2019s out \u2014 his backup overruns the run. Glance to Rice if he flies.'},
-    dc:{call:'Nickel, Zone Blitz',quote:'Bring the nickel, drop the end. Confuse the read \u2014 we\u2019re thin at LB.'},
-    qb:{read:'WILL is flying \u2014 backup not Greenlaw',quote:'WILL is flying \u2014 exactly as planned. Pulling it. Glance to Rice.'},
-    res:{comp:0.88,yds:22,epa:2.4,result:'Complete to Rice \u2022 22 yds \u2022 1st down',td:false},
-    ball:{type:'pass',target:'wrx',arc:20},
-    mov:{c:[400,470,400,462],lg:[365,470,358,462],lt:[330,470,322,462],rg:[435,470,442,462],rt:[470,470,478,462],rb:[365,518,400,478],qb:[400,520,400,505],te:[505,472,530,440],wrz:[720,468,710,350],wrx:[80,468,200,410],slot:[600,468,560,425],del:[338,460,345,485],dtl:[382,460,388,482],dtr:[418,460,415,482],der:[462,460,455,485],mlb:[400,425,380,400],wlb:[335,428,280,440],slb:[465,428,470,410],cbl:[82,450,170,405],cbr:[718,450,710,355],fs:[400,350,350,340],ss:[560,385,500,380]},
-    props:{mah:242,kel:6,pac:48},fantasy:{mah:16.4,kel:14.3,pac:8.0,rice:13.2}},
-  {dn:'1st & Goal',spot:'SF 4',quarter:'Q3',clock:'5:41',score:{kc:10,sf:14},
-    oc:{call:'Trips Bunch, Fade-Out-Flat',pers:'11 personnel',quote:'Goal-to-go. Bosa hurting on the edge \u2014 bunch fade-out-flat to that side. Triangle concept.'},
-    dc:{call:'Cover 0, All-Out Blitz',quote:'Six rushers. McDuffie iso on the fade. Win before he throws.'},
-    qb:{read:'Zero coverage, no safety help',quote:'Zero \u2014 no help over the top. Fade to Worthy on McDuffie. One-on-one. Throwing.'},
-    res:{comp:0.52,yds:4,epa:4.7,result:'TOUCHDOWN \u2022 Complete to Worthy \u2022 4 yds',td:true},
-    ball:{type:'pass',target:'wrz',arc:50},
-    mov:{c:[400,470,400,465],lg:[365,470,365,465],lt:[330,470,330,465],rg:[435,470,435,465],rt:[470,470,470,465],rb:[365,518,310,440],qb:[400,520,395,538],te:[505,472,570,415],wrz:[720,468,710,40],wrx:[80,468,180,370],slot:[600,468,340,375],del:[338,460,355,500],dtl:[382,460,390,490],dtr:[418,460,420,490],der:[462,460,455,500],mlb:[400,425,370,385],wlb:[335,428,295,395],slb:[465,428,480,395],cbl:[82,450,250,368],cbr:[718,450,714,100],fs:[400,350,660,180],ss:[560,385,420,350]},
-    props:{mah:256,kel:6,pac:48},fantasy:{mah:21.0,kel:14.3,pac:8.0,rice:13.2}}
-];
-
-// ========== SVG HELPERS ==========
-function getNodeId(key){
-  if(DEF_KEYS.includes(key))return 'd-'+key;
-  return 'o-'+key;
-}
-function moveNode(key,x,y){
-  const el=document.getElementById(getNodeId(key));
-  if(el)el.setAttribute('transform','translate('+x+','+y+')');
-}
-
-function drawRoutes(mov){
-  const layer=document.getElementById('routes');
-  layer.innerHTML='';
-  for(const[key,c]of Object.entries(mov)){
-    const[sx,sy,ex,ey]=c;
-    if(Math.abs(ex-sx)<12&&Math.abs(ey-sy)<12)continue;
-    const isDef=DEF_KEYS.includes(key);
-    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d','M '+sx+' '+sy+' L '+ex+' '+ey);
-    path.setAttribute('stroke',isDef?'rgba(224,80,80,0.35)':'rgba(196,144,0,0.45)');
-    path.setAttribute('stroke-width','1.2');
-    path.setAttribute('stroke-dasharray','4,3');
-    path.setAttribute('fill','none');
-    path.setAttribute('marker-end',isDef?'url(#arrowD)':'url(#arrowO)');
-    path.setAttribute('opacity','0');
-    path.style.transition='opacity .4s ease';
-    layer.appendChild(path);
-    requestAnimationFrame(()=>{path.setAttribute('opacity','0.75');});
-  }
-}
-function clearRoutes(){
-  const layer=document.getElementById('routes');
-  const paths=layer.querySelectorAll('path');
-  paths.forEach(p=>p.setAttribute('opacity','0'));
-}
-
-// ========== ANIMATION ==========
-async function animatePlay(mov,ballAction){
-  const duration=1400;
-  if(REDUCED){
-    for(const[k,c]of Object.entries(mov))moveNode(k,c[2],c[3]);
-    return;
-  }
-  const start=performance.now();
-  return new Promise(resolve=>{
-    function frame(){
-      const el=performance.now()-start;
-      const t=Math.min(el/duration,1);
-      const e=ease(t);
-      for(const[k,c]of Object.entries(mov)){
-        const cx=c[0]+(c[2]-c[0])*e;
-        const cy=c[1]+(c[3]-c[1])*e;
-        moveNode(k,cx,cy);
-      }
-      doBall(mov,ballAction,t);
-      if(t<1)requestAnimationFrame(frame);else resolve();
-    }
-    requestAnimationFrame(frame);
-  });
-}
-
-function doBall(mov,ba,t){
-  if(!ba)return;
-  const ball=document.getElementById('ball');
-  const trail=document.getElementById('ball-trail');
-  const pos=(key,prog)=>{
-    const m=mov[key];
-    if(!m)return{x:400,y:470};
-    const e=ease(prog);
-    return{x:m[0]+(m[2]-m[0])*e,y:m[1]+(m[3]-m[1])*e};
-  };
-  if(ba.type==='run'){
-    if(t<0.15){ball.setAttribute('cx',400);ball.setAttribute('cy',470);}
-    else if(t<0.35){
-      const s=(t-0.15)/0.2;const qb=pos('qb',t);
-      ball.setAttribute('cx',lerp(400,qb.x,s));ball.setAttribute('cy',lerp(470,qb.y,s));
-    }else{
-      const rb=pos(ba.target,t);
-      ball.setAttribute('cx',rb.x);ball.setAttribute('cy',rb.y);
-    }
-    trail.setAttribute('opacity','0');
-  }else{
-    const throwT=0.38,catchT=0.72;
-    if(t<0.15){ball.setAttribute('cx',400);ball.setAttribute('cy',470);trail.setAttribute('opacity','0');}
-    else if(t<throwT){const qb=pos('qb',t);ball.setAttribute('cx',qb.x);ball.setAttribute('cy',qb.y);trail.setAttribute('opacity','0');}
-    else if(t<catchT){
-      const s=(t-throwT)/(catchT-throwT);
-      const tQ=pos('qb',throwT),cT=pos(ba.target,catchT);
-      const bx=lerp(tQ.x,cT.x,s);
-      const by=lerp(tQ.y,cT.y,s)-Math.sin(s*Math.PI)*(ba.arc||25);
-      ball.setAttribute('cx',bx);ball.setAttribute('cy',by);
-      trail.setAttribute('x1',tQ.x);trail.setAttribute('y1',tQ.y);
-      trail.setAttribute('x2',bx);trail.setAttribute('y2',by);
-      trail.setAttribute('opacity','1');
-    }else{
-      const tgt=pos(ba.target,t);
-      ball.setAttribute('cx',tgt.x);ball.setAttribute('cy',tgt.y);
-      trail.setAttribute('opacity','0');
-    }
-  }
-}
-
-async function animateFormation(nextMov){
-  if(REDUCED){
-    for(const[k,c]of Object.entries(nextMov))moveNode(k,c[0],c[1]);
-    return;
-  }
-  const duration=600,start=performance.now();
-  const cur={};
-  for(const k of Object.keys(nextMov)){
-    const el=document.getElementById(getNodeId(k));
-    if(el){
-      const tr=el.getAttribute('transform')||'translate(0,0)';
-      const m=tr.match(/translate\(([-\d.]+)[,\s]+([-\d.]+)\)/);
-      if(m)cur[k]=[parseFloat(m[1]),parseFloat(m[2])];
-    }
-  }
-  return new Promise(resolve=>{
-    function frame(){
-      const t=Math.min((performance.now()-start)/duration,1);
-      const e=1-Math.pow(1-t,3);
-      for(const[k,c]of Object.entries(nextMov)){
-        if(!cur[k])continue;
-        const cx=cur[k][0]+(c[0]-cur[k][0])*e;
-        const cy=cur[k][1]+(c[1]-cur[k][1])*e;
-        moveNode(k,cx,cy);
-      }
-      if(t<1)requestAnimationFrame(frame);else resolve();
-    }
-    requestAnimationFrame(frame);
-  });
-}
-
-// ========== DRIVE TRACKER ==========
-const DRIVE_START_YARDS=35;
-const DRIVE_START_CLOCK_SEC=8*60+42; // 8:42
-
-function spotToYards(spot){
-  const m=spot.match(/^(KC|SF)\s+(\d+)/);
-  if(!m)return DRIVE_START_YARDS;
-  const yd=parseInt(m[2]);
-  return m[1]==='KC'?yd:(100-yd);
-}
-function clockToSec(clock){
-  const parts=clock.split(':').map(Number);
-  return parts[0]*60+parts[1];
-}
-function pctFromYards(yards){
-  return 8.33+(yards/100)*83.34;
-}
-function fmtElapsed(sec){
-  if(sec<0)sec=0;
-  return Math.floor(sec/60)+':'+String(Math.floor(sec%60)).padStart(2,'0');
-}
-function resetDriveTracker(){
-  const startPct=pctFromYards(DRIVE_START_YARDS);
-  document.getElementById('dt-ball').style.left=startPct+'%';
-  document.getElementById('dt-fill').style.width='0%';
-  document.getElementById('dt-yards').textContent='0';
-  document.getElementById('dt-time').textContent='0:00';
-  document.getElementById('dt-plays').textContent='0';
-}
-function updateDriveTracker(idx,play,allPlays){
-  // Compute end position of THIS play
-  let endYards;
-  if(play.res.td){
-    endYards=100;
-  } else if(idx<allPlays.length-1){
-    endYards=spotToYards(allPlays[idx+1].spot);
-  } else {
-    endYards=spotToYards(play.spot)+(play.res.yds||0);
-  }
-  const pct=pctFromYards(endYards);
-  document.getElementById('dt-ball').style.left=pct+'%';
-  document.getElementById('dt-fill').style.width=(pct-8.33)+'%';
-  // Yards gained drive total
-  document.getElementById('dt-yards').textContent=Math.max(0,endYards-DRIVE_START_YARDS);
-  // Elapsed: from drive start to next play's clock (or +30s for last)
-  let nowSec;
-  if(idx<allPlays.length-1){
-    nowSec=clockToSec(allPlays[idx+1].clock);
-  } else {
-    nowSec=clockToSec(play.clock)-30;
-  }
-  document.getElementById('dt-time').textContent=fmtElapsed(DRIVE_START_CLOCK_SEC-nowSec);
-  document.getElementById('dt-plays').textContent=idx+1;
-}
-
-// ========== PLAY ENGINE ==========
-async function runPlay(play,idx){
-  document.getElementById('sb-play').textContent='Play '+(idx+1)+'/6';
-  document.getElementById('gs-play').textContent=idx+1;
-  updateBoard(play);
-  document.getElementById('wb-title').textContent=play.oc.call+' vs '+play.dc.call;
-
-  // Graph step 0: data
-  setGraphStep(0);
-  await delay(300);
-
-  // Draw routes (chalk-drawing effect)
-  drawRoutes(play.mov);
-  await delay(300);
-
-  // OC reasoning
-  setGraphStep(1);
-  setActive('oc');
-  await typewrite('oc-stream',fmtOC(play.oc),22);
-
-  // DC reasoning
-  setGraphStep(2);
-  setActive('dc');
-  await typewrite('dc-stream',fmtDC(play.dc),24);
-
-  // QB read
-  setGraphStep(3);
-  setActive('qb');
-  await typewrite('qb-stream',fmtQB(play.qb),20);
-
-  // Snap animation
-  setGraphStep(4);
-  setActive(null);
-  await animatePlay(play.mov,play.ball);
-
-  // Resolver
-  setActive('res');
-  await typewrite('resolver-stream',fmtRes(play.res),18);
-
-  // Result
-  setGraphStep(5);
-  showChyron(play.res.result,play.res.td);
-  if(play.res.td){
-    document.getElementById('ez-glow').setAttribute('opacity','0.22');
-  }
-  updateDriveTracker(idx,play,activePlays);
-  await delay(1100);
-
-  updateTickers(play.props,play.fantasy);
-  await delay(350);
-}
-
-async function transitionNext(nextPlay){
-  document.querySelectorAll('.panel-stream').forEach(el=>el.classList.add('fading'));
-  await delay(220);
-  document.querySelectorAll('.panel-stream').forEach(el=>{el.innerHTML='';el.classList.remove('fading');});
-  clearRoutes();
-  await animateFormation(nextPlay.mov);
-  hideChyron();
-  await delay(200);
-}
-
-let activePlays=BASE_PLAYS;
-let simRunning=false;
-let driveCount=0;
-
-async function runDrive(){
-  if(simRunning)return;
-  simRunning=true;
-  const btn=document.getElementById('run-btn');
-  btn.disabled=true;
-  btn.textContent='Running...';
-
-  hideChyron();
-  clearRoutes();
-  document.getElementById('ez-glow').setAttribute('opacity','0');
-  resetDriveTracker();
-  driveCount++;
-  document.getElementById('gs-drive').textContent=driveCount;
-
-  // Reset tickers on re-run (after first drive)
-  if(driveCount>1){
-    updateTickers({mah:0,kel:0,pac:0},{mah:0,kel:0,pac:0,rice:0});
-    document.getElementById('sb-kc').textContent='10';
-  }
-
-  for(let i=0;i<activePlays.length;i++){
-    if(i>0)await transitionNext(activePlays[i]);
-    try{await runPlay(activePlays[i],i);}catch(e){console.warn('Play error:',e);}
-  }
-
-  setActive(null);
-  setGraphStep(6); // all done
-  hideChyron();
-
-  const last=activePlays[activePlays.length-1];
-  if(last.res.td){
-    await delay(400);
-    document.getElementById('sb-kc').textContent=driveCount===1?'17':(10+7).toString();
-    await delay(600);
-    document.getElementById('ez-glow').setAttribute('opacity','0');
-  }
-
-  simRunning=false;
-  btn.disabled=false;
-  btn.textContent='Run New Drive';
-}
-
-// ========== CONTROLS ==========
-const csRun=document.getElementById('cs-run');
-const csBlitz=document.getElementById('cs-blitz');
-const csTempo=document.getElementById('cs-tempo');
-csRun.addEventListener('input',()=>{document.getElementById('cv-run').textContent=csRun.value+'%';});
-csBlitz.addEventListener('input',()=>{document.getElementById('cv-blitz').textContent=csBlitz.value+'%';});
-csTempo.addEventListener('input',()=>{document.getElementById('cv-tempo').textContent=csTempo.value;});
-
-document.getElementById('reset-btn').addEventListener('click',()=>{
-  csRun.value=38;csBlitz.value=32;csTempo.value=67;
-  document.getElementById('cv-run').textContent='38%';
-  document.getElementById('cv-blitz').textContent='32%';
-  document.getElementById('cv-tempo').textContent='67';
-});
-
-document.getElementById('run-btn').addEventListener('click',()=>{
-  if(simRunning)return;
-  const run=+csRun.value,blitz=+csBlitz.value,tempo=+csTempo.value;
-  activePlays=buildPlays(run,blitz,tempo);
-  runDrive();
-});
-
-function buildPlays(run,blitz,tempo){
-  const rf=run/38,bf=blitz/32,tf=tempo/67;
-  let mah=0,kel=0,pac=0,fMah=0,fKel=0,fPac=0,fRice=0;
-  return BASE_PLAYS.map((p,i)=>{
-    const mp=JSON.parse(JSON.stringify(p));
-    mp.score={kc:10,sf:14};
-    let yds;
-    if(mp.res.comp!==null){
-      mp.res.comp=Math.round(Math.max(0.35,p.res.comp*(1-(bf-1)*0.15))*100)/100;
-      yds=Math.max(2,Math.round(p.res.yds*(2-rf)*tf));
-    }else{
-      yds=Math.max(1,Math.round(p.res.yds*rf*tf));
-    }
-    mp.res.yds=yds;
-    mp.res.epa=Math.round(p.res.epa*tf*10)/10;
-    if(i===0){pac+=yds;fPac+=yds/10;}
-    else{mah+=yds;fMah+=yds/25;}
-    if(i===1||i===2){kel++;fKel+=1+yds/10;}
-    if(i===3||i===4){fRice+=1+yds/10;}
-    if(i===5&&mp.res.td){fMah+=4;fRice+=1+yds/10;}
-    mp.props={mah:mah,kel:kel,pac:pac};
-    mp.fantasy={mah:Math.round(fMah*10)/10,kel:Math.round(fKel*10)/10,pac:Math.round(fPac*10)/10,rice:Math.round(fRice*10)/10};
-    if(mp.res.td)mp.res.result='TOUCHDOWN \u2022 '+yds+' yds';
-    else if(mp.res.comp!==null)mp.res.result='Complete \u2022 '+yds+' yds';
-    else mp.res.result='Run \u2022 '+yds+' yds';
-    return mp;
-  });
-}
-
-// ========== INIT ==========
-let autoStarted=false;
-function maybeStart(){
-  if(autoStarted)return;
-  const demo=document.getElementById('demo');
-  const rect=demo.getBoundingClientRect();
-  if(rect.top<window.innerHeight*0.7){
-    autoStarted=true;
-    runDrive();
-  }
-}
-window.addEventListener('load',()=>{
-  document.fonts.ready.then(()=>{
-    maybeStart();
-    window.addEventListener('scroll',maybeStart,{passive:true});
-  });
-});
-
-// Section fade observer
-const secObs=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis');});
-},{threshold:0.1});
-document.querySelectorAll('.section-fade').forEach(el=>secObs.observe(el));
-
-// Nav scroll
-window.addEventListener('scroll',()=>{
-  document.querySelector('nav').classList.toggle('scrolled',window.scrollY>40);
-},{passive:true});
-
-// ========== ENGINE MODALS ==========
-const modalBackdrop=document.getElementById('modal-backdrop');
-const engineModals={
-  process:document.getElementById('modal-process'),
-  form:document.getElementById('modal-form'),
-  chess:document.getElementById('modal-chess')
-};
-
-function openEngineModal(engine){
-  const m=engineModals[engine];
-  if(!m)return;
-  modalBackdrop.classList.add('open');
-  m.classList.add('open');
-  document.body.style.overflow='hidden';
-  // Scroll to top of modal
-  const scroll=m.querySelector('.modal-scroll');
-  if(scroll)scroll.scrollTop=0;
-}
-
-function closeEngineModals(){
-  modalBackdrop.classList.remove('open');
-  Object.values(engineModals).forEach(m=>m&&m.classList.remove('open'));
-  document.body.style.overflow='';
-}
-
-// Wire pillars
-document.querySelectorAll('.pillar[data-engine]').forEach(p=>{
-  p.addEventListener('click',()=>openEngineModal(p.dataset.engine));
-});
-
-// Close handlers
-modalBackdrop.addEventListener('click',closeEngineModals);
-document.querySelectorAll('.modal-close').forEach(btn=>{
-  btn.addEventListener('click',closeEngineModals);
-});
-// Prevent modal content clicks from bubbling to backdrop
-Object.values(engineModals).forEach(m=>{
-  if(m)m.addEventListener('click',e=>e.stopPropagation());
-});
-// Escape key
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape')closeEngineModals();
-});
+const nav=document.querySelector('nav');
+window.addEventListener('scroll',()=>{nav.classList.toggle('scrolled',window.scrollY>10)});
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}}),{threshold:.1});
+document.querySelectorAll('.fade-in').forEach(e=>obs.observe(e));
 </script>
 </body>
 </html>
