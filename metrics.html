@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Snapcount — Model Health Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg: #0e1116;
+      --panel: #161b22;
+      --panel-2: #1c2128;
+      --border: #2d333b;
+      --text: #e6edf3;
+      --muted: #7d8590;
+      --accent: #58a6ff;
+      --good: #3fb950;
+      --warn: #d29922;
+      --bad: #f85149;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      line-height: 1.5;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px 64px; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 32px; }
+    h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.02em; }
+    h2 { margin: 40px 0 16px; font-size: 20px; letter-spacing: -0.01em; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    h3 { margin: 24px 0 8px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .subtitle { color: var(--muted); font-size: 14px; margin: 0; }
+    .as-of { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    .grid { display: grid; gap: 16px; }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .card .value { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+    .card .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+    td.num { font-variant-numeric: tabular-nums; text-align: right; }
+    th.num { text-align: right; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+    .tag-good { background: rgba(63,185,80,0.15); color: var(--good); }
+    .tag-warn { background: rgba(210,153,34,0.15); color: var(--warn); }
+    .tag-bad  { background: rgba(248,81,73,0.15); color: var(--bad); }
+    .tag-muted { background: rgba(125,133,144,0.15); color: var(--muted); }
+    .roadmap { list-style: none; padding: 0; }
+    .roadmap li { padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: baseline; }
+    .roadmap li:last-child { border-bottom: 0; }
+    .roadmap .id { font-family: ui-monospace, monospace; color: var(--muted); font-size: 13px; min-width: 80px; }
+    svg.trend { display: block; width: 100%; height: 120px; }
+    .legend { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .footnote { color: var(--muted); font-size: 13px; margin-top: 16px; line-height: 1.6; }
+    a { color: var(--accent); }
+    @media (max-width: 720px) {
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Snapcount — Model Health Dashboard</h1>
+    <p class="subtitle">Per-position prediction accuracy on the 2024 wks 9-22 starter-only cohort</p>
+    <p class="as-of">As of <span id="as-of"></span> • Validation window: 2024 wks 9-22 • Holdout: 2025 (sealed)</p>
+  </header>
+
+  <h2>Headline numbers</h2>
+  <div id="headline-cards" class="grid grid-4"></div>
+  <p class="footnote">
+    <strong>MAE</strong> (mean absolute error) = average miss in yards. Lower is better.
+    <strong>sMAPE</strong> = error as a % of truth. We grade on the snap-share-filtered cohort
+    (starters and primary backups only) — that's the universe we actually predict for in production.
+  </p>
+
+  <h2>Yards targets — all 4 positions</h2>
+  <table>
+    <thead><tr>
+      <th>Target</th>
+      <th class="num">n</th>
+      <th class="num">MAE (XGB)</th>
+      <th class="num">sMAPE</th>
+      <th class="num">MAE (shrunk)</th>
+      <th>Model</th>
+    </tr></thead>
+    <tbody id="yards-rows"></tbody>
+  </table>
+
+  <h2>TD targets — calibration framework (M6.1)</h2>
+  <p class="footnote">
+    TDs aren't predictable as point counts (sMAPE blows up because truth is often 0).
+    We reframed TDs as a probability distribution over discrete classes. Lower Brier = sharper
+    + better-calibrated. ECE = expected calibration error (0 = perfect).
+  </p>
+  <table>
+    <thead><tr>
+      <th>Target</th>
+      <th class="num">n</th>
+      <th>Classes</th>
+      <th class="num">Brier</th>
+      <th class="num">vs uniform</th>
+      <th class="num">ECE</th>
+      <th class="num">MAE (E[y])</th>
+    </tr></thead>
+    <tbody id="td-rows"></tbody>
+  </table>
+
+  <h2>Year-over-year trend (yards, 2018-2024)</h2>
+  <p class="footnote">Per-season overall MAE from the walk-forward backtest. Lower bars / lower line = model getting better.</p>
+  <div id="trend-charts" class="grid grid-2"></div>
+
+  <h2>Top 10 players by career production — per-position MAE</h2>
+  <div id="top-players" class="grid grid-2"></div>
+
+  <h2>Roadmap</h2>
+  <ul id="roadmap" class="roadmap"></ul>
+
+  <h2>What's NOT in here</h2>
+  <p class="footnote">
+    - The 2025 season is the holdout. It has never been opened and won't be until M_serve ships.<br>
+    - "Backup" players (snap_share below the position floor) are excluded from both training and grading.
+      The unfiltered MAE 51 we shipped in M2-M5 is a misleading number — see <a href="the-snapcount-journey.md">the journal</a>, Chapter 7-8.<br>
+    - Live data (closing Vegas line, in-week injury severity, defense-vs-position breakdown) lands with M_serve.
+  </p>
+</div>
+
+<script>
+const DATA = {
+  "generated_at_utc": "2026-05-11T21:10:04.007827+00:00",
+  "as_of_date": "2026-05-11",
+  "validation_window": "2024 weeks 9-22",
+  "holdout_seasons": [
+    2025
+  ],
+  "snap_filter": {
+    "description": "Truth-time snap_share floor per position",
+    "QB": 0.75,
+    "RB": 0.3,
+    "WR": 0.4,
+    "TE": 0.4
+  },
+  "yards_targets": [
+    {
+      "key": "QB_passing_yards",
+      "label": "QB passing yards",
+      "n_samples": 309,
+      "mae_xgb": 54.109091305038305,
+      "rmse_xgb": 68.0106785434918,
+      "smape_xgb": 0.23505818723925614,
+      "mae_shrunk": 54.08387728033269,
+      "smape_shrunk": 0.23498875094011507,
+      "model": "XGBoost(objective=reg:squarederror, n_estimators=200, max_depth=4, lr=0.05)"
+    },
+    {
+      "key": "RB_rushing_yards",
+      "label": "RB rushing yards",
+      "n_samples": 468,
+      "mae_xgb": 20.59059077857906,
+      "rmse_xgb": 28.21946366521093,
+      "smape_xgb": 0.4520679201403659,
+      "mae_shrunk": 20.801627009775277,
+      "smape_shrunk": 0.45710851252016943,
+      "model": "XGBoost(objective=reg:squarederror, n_estimators=200, max_depth=4, lr=0.05)"
+    },
+    {
+      "key": "WR_receiving_yards",
+      "label": "WR receiving yards",
+      "n_samples": 946,
+      "mae_xgb": 22.43330161314434,
+      "rmse_xgb": 30.373200113180545,
+      "smape_xgb": 0.5921096931654167,
+      "mae_shrunk": 22.46963477918775,
+      "smape_shrunk": 0.5960222993067694,
+      "model": "XGBoost(objective=reg:squarederror, n_estimators=200, max_depth=4, lr=0.05)"
+    },
+    {
+      "key": "TE_receiving_yards",
+      "label": "TE receiving yards",
+      "n_samples": 479,
+      "mae_xgb": 15.24224159046852,
+      "rmse_xgb": 19.548409234426742,
+      "smape_xgb": 0.6777490061203884,
+      "mae_shrunk": 15.225895905810674,
+      "smape_shrunk": 0.6740615850939997,
+      "model": "XGBoost(objective=reg:squarederror, n_estimators=200, max_depth=4, lr=0.05)"
+    }
+  ],
+  "td_targets": [
+    {
+      "key": "QB_passing_tds",
+      "label": "QB passing TDs",
+      "n_samples": 309,
+      "class_labels": [
+        "0",
+        "1",
+        "2",
+        "3+"
+      ],
+      "brier_calibration": 0.7273558378219604,
+      "ece_calibration": 0.11473696883828122,
+      "mae_expected_calibration": 0.8994067039931476,
+      "per_class_recall_calibration": {
+        "0": 0.0967741935483871,
+        "1": 0.5425531914893617,
+        "2": 0.24210526315789474,
+        "3+": 0.10344827586206896
+      },
+      "brier_shrunk": 0.7269185185432434,
+      "ece_shrunk": 0.07357186242986267,
+      "mae_expected_shrunk": 0.9148348336526974,
+      "per_class_recall_shrunk": {
+        "0": 0.11290322580645161,
+        "1": 0.574468085106383,
+        "2": 0.22105263157894736,
+        "3+": 0.08620689655172414
+      },
+      "uniform_brier": 0.75
+    },
+    {
+      "key": "RB_rushing_tds",
+      "label": "RB rushing TDs",
+      "n_samples": 468,
+      "class_labels": [
+        "0",
+        "1",
+        "2+"
+      ],
+      "brier_calibration": 0.4472857117652893,
+      "ece_calibration": 0.03393528686884122,
+      "mae_expected_calibration": 0.4851982977973102,
+      "per_class_recall_calibration": {
+        "0": 0.9584664536741214,
+        "1": 0.1440677966101695,
+        "2+": 0.0
+      },
+      "brier_shrunk": 0.4514528512954712,
+      "ece_shrunk": 0.03192177332109875,
+      "mae_expected_shrunk": 0.510517902723832,
+      "per_class_recall_shrunk": {
+        "0": 0.9936102236421726,
+        "1": 0.05084745762711865,
+        "2+": 0.0
+      },
+      "uniform_brier": 0.6667
+    },
+    {
+      "key": "WR_receiving_tds",
+      "label": "WR receiving TDs",
+      "n_samples": 946,
+      "class_labels": [
+        "0",
+        "1",
+        "2+"
+      ],
+      "brier_calibration": 0.40114542841911316,
+      "ece_calibration": 0.030207976068805174,
+      "mae_expected_calibration": 0.420157702936275,
+      "per_class_recall_calibration": {
+        "0": 0.9956584659913169,
+        "1": 0.004761904761904762,
+        "2+": 0.0
+      },
+      "brier_shrunk": 0.4006785750389099,
+      "ece_shrunk": 0.01893825334423942,
+      "mae_expected_shrunk": 0.43497765042295333,
+      "per_class_recall_shrunk": {
+        "0": 1.0,
+        "1": 0.0,
+        "2+": 0.0
+      },
+      "uniform_brier": 0.6667
+    },
+    {
+      "key": "TE_receiving_tds",
+      "label": "TE receiving TDs",
+      "n_samples": 479,
+      "class_labels": [
+        "0",
+        "1",
+        "2+"
+      ],
+      "brier_calibration": 0.3050464987754822,
+      "ece_calibration": 0.03175304192341943,
+      "mae_expected_calibration": 0.31459345625803875,
+      "per_class_recall_calibration": {
+        "0": 0.9922077922077922,
+        "1": 0.011363636363636364,
+        "2+": 0.0
+      },
+      "brier_shrunk": 0.3034222722053528,
+      "ece_shrunk": 0.020264258339907762,
+      "mae_expected_shrunk": 0.3234732375549258,
+      "per_class_recall_shrunk": {
+        "0": 1.0,
+        "1": 0.0,
+        "2+": 0.0
+      },
+      "uniform_brier": 0.6667
+    }
+  ],
+  "per_season_overall": {
+    "QB passing yards": [
+      {
+        "season": 2018,
+        "n": 514,
+        "mae": 61.12841761251368
+      },
+      {
+        "season": 2019,
+        "n": 516,
+        "mae": 58.120298577833545
+      },
+      {
+        "season": 2020,
+        "n": 505,
+        "mae": 59.64425997592435
+      },
+      {
+        "season": 2021,
+        "n": 540,
+        "mae": 55.97114407574689
+      },
+      {
+        "season": 2022,
+        "n": 542,
+        "mae": 55.140332211427584
+      },
+      {
+        "season": 2023,
+        "n": 534,
+        "mae": 54.16297483979986
+      },
+      {
+        "season": 2024,
+        "n": 544,
+        "mae": 55.419168556437775
+      }
+    ],
+    "RB rushing yards": [
+      {
+        "season": 2018,
+        "n": 859,
+        "mae": 22.347093949877202
+      },
+      {
+        "season": 2019,
+        "n": 830,
+        "mae": 23.110871899336665
+      },
+      {
+        "season": 2020,
+        "n": 837,
+        "mae": 21.521890610919346
+      },
+      {
+        "season": 2021,
+        "n": 880,
+        "mae": 20.74690215291286
+      },
+      {
+        "season": 2022,
+        "n": 893,
+        "mae": 21.859225646962912
+      },
+      {
+        "season": 2023,
+        "n": 864,
+        "mae": 20.518582860214842
+      },
+      {
+        "season": 2024,
+        "n": 851,
+        "mae": 21.20556004099399
+      }
+    ],
+    "WR receiving yards": [
+      {
+        "season": 2018,
+        "n": 1618,
+        "mae": 23.904160246713495
+      },
+      {
+        "season": 2019,
+        "n": 1560,
+        "mae": 24.411762669606087
+      },
+      {
+        "season": 2020,
+        "n": 1576,
+        "mae": 24.624151082510874
+      },
+      {
+        "season": 2021,
+        "n": 1711,
+        "mae": 23.22583665295974
+      },
+      {
+        "season": 2022,
+        "n": 1643,
+        "mae": 22.91943402632808
+      },
+      {
+        "season": 2023,
+        "n": 1676,
+        "mae": 23.52656633067245
+      },
+      {
+        "season": 2024,
+        "n": 1677,
+        "mae": 22.2920456674743
+      }
+    ],
+    "TE receiving yards": [
+      {
+        "season": 2018,
+        "n": 698,
+        "mae": 17.2711514651263
+      },
+      {
+        "season": 2019,
+        "n": 796,
+        "mae": 16.188294369296813
+      },
+      {
+        "season": 2020,
+        "n": 792,
+        "mae": 16.00548891681764
+      },
+      {
+        "season": 2021,
+        "n": 827,
+        "mae": 16.231688338691118
+      },
+      {
+        "season": 2022,
+        "n": 807,
+        "mae": 15.943940611687735
+      },
+      {
+        "season": 2023,
+        "n": 778,
+        "mae": 15.671928916107337
+      },
+      {
+        "season": 2024,
+        "n": 841,
+        "mae": 15.464063959831856
+      }
+    ]
+  },
+  "top_players": {
+    "QB": [
+      {
+        "name": "Patrick Mahomes",
+        "games": 129,
+        "career_total": 37279.0,
+        "career_mae": 59.3531950721445
+      },
+      {
+        "name": "Jared Goff",
+        "games": 121,
+        "career_total": 32356.0,
+        "career_mae": 58.32561057855275
+      },
+      {
+        "name": "Josh Allen",
+        "games": 117,
+        "career_total": 29075.0,
+        "career_mae": 55.79750256660657
+      },
+      {
+        "name": "Kirk Cousins",
+        "games": 104,
+        "career_total": 27235.0,
+        "career_mae": 64.42062700711764
+      },
+      {
+        "name": "Matthew Stafford",
+        "games": 101,
+        "career_total": 26810.0,
+        "career_mae": 51.05232374738939
+      },
+      {
+        "name": "Derek Carr",
+        "games": 103,
+        "career_total": 26246.0,
+        "career_mae": 56.51943332709155
+      },
+      {
+        "name": "Tom Brady",
+        "games": 91,
+        "career_total": 25797.0,
+        "career_mae": 61.37238554902129
+      },
+      {
+        "name": "Dak Prescott",
+        "games": 93,
+        "career_total": 25629.0,
+        "career_mae": 63.28586767053091
+      },
+      {
+        "name": "Baker Mayfield",
+        "games": 107,
+        "career_total": 25622.0,
+        "career_mae": 58.77265160106053
+      },
+      {
+        "name": "Aaron Rodgers",
+        "games": 98,
+        "career_total": 25310.0,
+        "career_mae": 53.815029689243865
+      }
+    ],
+    "RB": [
+      {
+        "name": "Derrick Henry",
+        "games": 108,
+        "career_total": 10875.0,
+        "career_mae": 39.65255431775694
+      },
+      {
+        "name": "Saquon Barkley",
+        "games": 94,
+        "career_total": 7792.0,
+        "career_mae": 33.042316964332095
+      },
+      {
+        "name": "Joe Mixon",
+        "games": 103,
+        "career_total": 7345.0,
+        "career_mae": 28.830337968844812
+      },
+      {
+        "name": "Josh Jacobs",
+        "games": 92,
+        "career_total": 7038.0,
+        "career_mae": 25.783215854478918
+      },
+      {
+        "name": "Aaron Jones",
+        "games": 104,
+        "career_total": 7015.0,
+        "career_mae": 25.390453210243813
+      },
+      {
+        "name": "Nick Chubb",
+        "games": 78,
+        "career_total": 6650.0,
+        "career_mae": 28.566060775365585
+      },
+      {
+        "name": "Ezekiel Elliott",
+        "games": 103,
+        "career_total": 6589.0,
+        "career_mae": 23.43218625633462
+      },
+      {
+        "name": "Christian McCaffrey",
+        "games": 82,
+        "career_total": 6349.0,
+        "career_mae": 29.646766941721847
+      },
+      {
+        "name": "Alvin Kamara",
+        "games": 104,
+        "career_total": 6342.0,
+        "career_mae": 20.25651924426739
+      },
+      {
+        "name": "Jonathan Taylor",
+        "games": 65,
+        "career_total": 6061.0,
+        "career_mae": 33.81285790663499
+      }
+    ],
+    "WR": [
+      {
+        "name": "Tyreek Hill",
+        "games": 119,
+        "career_total": 10382.0,
+        "career_mae": 36.073649302250196
+      },
+      {
+        "name": "Davante Adams",
+        "games": 109,
+        "career_total": 9499.0,
+        "career_mae": 38.74221836755035
+      },
+      {
+        "name": "Mike Evans",
+        "games": 112,
+        "career_total": 8720.0,
+        "career_mae": 34.35602564471109
+      },
+      {
+        "name": "Stefon Diggs",
+        "games": 115,
+        "career_total": 8695.0,
+        "career_mae": 32.7314116768215
+      },
+      {
+        "name": "A.J. Brown",
+        "games": 100,
+        "career_total": 7615.0,
+        "career_mae": 33.589375495910645
+      },
+      {
+        "name": "Cooper Kupp",
+        "games": 94,
+        "career_total": 7524.0,
+        "career_mae": 33.630442862815045
+      },
+      {
+        "name": "Justin Jefferson",
+        "games": 78,
+        "career_total": 7510.0,
+        "career_mae": 41.43360098814353
+      },
+      {
+        "name": "DJ Moore",
+        "games": 111,
+        "career_total": 7479.0,
+        "career_mae": 28.792462288796365
+      },
+      {
+        "name": "Keenan Allen",
+        "games": 98,
+        "career_total": 7314.0,
+        "career_mae": 26.842109193607254
+      },
+      {
+        "name": "Amari Cooper",
+        "games": 106,
+        "career_total": 7257.0,
+        "career_mae": 33.73513918102912
+      }
+    ],
+    "TE": [
+      {
+        "name": "Travis Kelce",
+        "games": 132,
+        "career_total": 10035.0,
+        "career_mae": 27.63824902158795
+      },
+      {
+        "name": "George Kittle",
+        "games": 109,
+        "career_total": 7293.0,
+        "career_mae": 28.978708284710525
+      },
+      {
+        "name": "Mark Andrews",
+        "games": 90,
+        "career_total": 5127.0,
+        "career_mae": 23.83719400829739
+      },
+      {
+        "name": "Zach Ertz",
+        "games": 98,
+        "career_total": 4709.0,
+        "career_mae": 20.941298173398387
+      },
+      {
+        "name": "Dallas Goedert",
+        "games": 94,
+        "career_total": 4549.0,
+        "career_mae": 19.628334451229016
+      },
+      {
+        "name": "Evan Engram",
+        "games": 93,
+        "career_total": 4239.0,
+        "career_mae": 21.30400836083197
+      },
+      {
+        "name": "T.J. Hockenson",
+        "games": 84,
+        "career_total": 4195.0,
+        "career_mae": 22.344451768057688
+      },
+      {
+        "name": "Darren Waller",
+        "games": 61,
+        "career_total": 3927.0,
+        "career_mae": 29.131624159265737
+      },
+      {
+        "name": "Dalton Schultz",
+        "games": 94,
+        "career_total": 3647.0,
+        "career_mae": 17.004156528635228
+      },
+      {
+        "name": "Hunter Henry",
+        "games": 88,
+        "career_total": 3500.0,
+        "career_mae": 16.145236188715156
+      }
+    ]
+  },
+  "roadmap": [
+    {
+      "id": "M0",
+      "name": "Data layer + 3-tier validator",
+      "status": "shipped"
+    },
+    {
+      "id": "M1",
+      "name": "Ridge baseline (MAE 67)",
+      "status": "shipped"
+    },
+    {
+      "id": "M2",
+      "name": "XGBoost target-aware (MAE 51)",
+      "status": "shipped"
+    },
+    {
+      "id": "M3",
+      "name": "Layers 2/3/4 (EPA + NGS + Vegas)",
+      "status": "shipped"
+    },
+    {
+      "id": "M4",
+      "name": "Layer 5 + SnapForm v1",
+      "status": "shipped"
+    },
+    {
+      "id": "M4-snap",
+      "name": "Snap-share filter (canonical cohort)",
+      "status": "shipped"
+    },
+    {
+      "id": "M5",
+      "name": "Entity embeddings + ensemble (tied M4)",
+      "status": "shipped"
+    },
+    {
+      "id": "M6.1",
+      "name": "TD calibration (multinomial + Brier)",
+      "status": "shipped"
+    },
+    {
+      "id": "M6.2",
+      "name": "Per-player Bayesian shrinkage",
+      "status": "shipped"
+    },
+    {
+      "id": "M_serve",
+      "name": "Live snapshot layer (Adam dependency)",
+      "status": "queued"
+    },
+    {
+      "id": "M7",
+      "name": "Defense-vs-position breakdown features",
+      "status": "queued"
+    },
+    {
+      "id": "NFLooker",
+      "name": "In-house language model corpus + fine-tune",
+      "status": "deferred"
+    }
+  ]
+};
+
+document.getElementById("as-of").textContent = DATA.as_of_date;
+
+// Headline cards — pick the 4 yards targets.
+const hl = document.getElementById("headline-cards");
+const labels = { "QB_passing_yards": "QB pass yds", "RB_rushing_yards": "RB rush yds",
+                 "WR_receiving_yards": "WR rec yds", "TE_receiving_yards": "TE rec yds" };
+DATA.yards_targets.forEach(t => {
+  const mae = t.mae_shrunk ?? t.mae_xgb;
+  const smape = t.smape_shrunk ?? t.smape_xgb;
+  const flag = t.mae_shrunk != null ? "(shrunk)" : "(XGB)";
+  hl.insertAdjacentHTML("beforeend", `
+    <div class="card">
+      <div class="label">${labels[t.key] || t.label}</div>
+      <div class="value">${mae != null ? mae.toFixed(1) : "—"}</div>
+      <div class="sub">MAE ${flag} · sMAPE ${smape != null ? (smape*100).toFixed(0) + "%" : "—"} · n=${t.n_samples ?? "—"}</div>
+    </div>
+  `);
+});
+
+// Yards rows
+const ybody = document.getElementById("yards-rows");
+DATA.yards_targets.forEach(t => {
+  ybody.insertAdjacentHTML("beforeend", `
+    <tr>
+      <td>${t.label}</td>
+      <td class="num">${t.n_samples ?? "—"}</td>
+      <td class="num">${t.mae_xgb != null ? t.mae_xgb.toFixed(2) : "—"}</td>
+      <td class="num">${t.smape_xgb != null ? (t.smape_xgb*100).toFixed(1) + "%" : "—"}</td>
+      <td class="num">${t.mae_shrunk != null ? t.mae_shrunk.toFixed(2) : "<span class='tag tag-muted'>pending M6.2</span>"}</td>
+      <td><span class="tag tag-muted">${(t.model || "").split("(")[0].trim() || "XGB"}</span></td>
+    </tr>
+  `);
+});
+
+// TD rows
+const tbody = document.getElementById("td-rows");
+DATA.td_targets.forEach(t => {
+  const liftPct = t.brier_calibration != null && t.uniform_brier != null
+    ? (((t.uniform_brier - t.brier_calibration) / t.uniform_brier) * 100).toFixed(1) + "%"
+    : "—";
+  tbody.insertAdjacentHTML("beforeend", `
+    <tr>
+      <td>${t.label}</td>
+      <td class="num">${t.n_samples ?? "—"}</td>
+      <td>[${(t.class_labels || []).join(", ")}]</td>
+      <td class="num">${t.brier_calibration != null ? t.brier_calibration.toFixed(4) : "—"}</td>
+      <td class="num">${liftPct}</td>
+      <td class="num">${t.ece_calibration != null ? t.ece_calibration.toFixed(4) : "—"}</td>
+      <td class="num">${t.mae_expected_calibration != null ? t.mae_expected_calibration.toFixed(3) : "—"}</td>
+    </tr>
+  `);
+});
+
+// Trend charts (one per position).
+const tcharts = document.getElementById("trend-charts");
+const order = ["QB passing yards", "RB rushing yards", "WR receiving yards", "TE receiving yards"];
+order.forEach(label => {
+  const series = DATA.per_season_overall[label];
+  if (!series) return;
+  const w = 480, h = 120, pad = 32;
+  const maes = series.map(s => s.mae);
+  const min = Math.min(...maes), max = Math.max(...maes);
+  const y = m => h - pad - ((m - min) / Math.max(max - min, 1e-9)) * (h - 2 * pad);
+  const x = i => pad + (i / (series.length - 1)) * (w - 2 * pad);
+  const path = series.map((s, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(s.mae)}`).join(" ");
+  const dots = series.map((s, i) => `<circle cx="${x(i)}" cy="${y(s.mae)}" r="3" fill="var(--accent)"/>
+    <text x="${x(i)}" y="${y(s.mae) - 8}" font-size="10" fill="var(--muted)" text-anchor="middle">${s.mae.toFixed(1)}</text>`).join("");
+  const xlabels = series.map((s, i) => `<text x="${x(i)}" y="${h - 8}" font-size="11" fill="var(--muted)" text-anchor="middle">${s.season}</text>`).join("");
+  tcharts.insertAdjacentHTML("beforeend", `
+    <div class="card">
+      <h3>${label}</h3>
+      <svg class="trend" viewBox="0 0 ${w} ${h}">
+        <path d="${path}" stroke="var(--accent)" stroke-width="2" fill="none"/>
+        ${dots}
+        ${xlabels}
+      </svg>
+      <div class="legend">MAE per season • min ${min.toFixed(1)} • max ${max.toFixed(1)}</div>
+    </div>
+  `);
+});
+
+// Top players tables
+const tp = document.getElementById("top-players");
+Object.keys(DATA.top_players || {}).forEach(pos => {
+  const rows = DATA.top_players[pos];
+  const html = rows.map(r => `<tr>
+    <td>${r.name}</td>
+    <td class="num">${r.games}</td>
+    <td class="num">${r.career_total.toFixed(0)}</td>
+    <td class="num">${r.career_mae.toFixed(1)}</td>
+  </tr>`).join("");
+  tp.insertAdjacentHTML("beforeend", `
+    <div class="card">
+      <h3>${pos} — top 10 by career yards</h3>
+      <table>
+        <thead><tr><th>Player</th><th class="num">G</th><th class="num">Total</th><th class="num">Career MAE</th></tr></thead>
+        <tbody>${html}</tbody>
+      </table>
+    </div>
+  `);
+});
+
+// Roadmap
+const rm = document.getElementById("roadmap");
+const statusTag = (s) => {
+  if (s === "shipped")     return '<span class="tag tag-good">shipped</span>';
+  if (s === "in_progress") return '<span class="tag tag-warn">in progress</span>';
+  if (s === "queued")      return '<span class="tag tag-muted">queued</span>';
+  if (s === "deferred")    return '<span class="tag tag-muted">deferred</span>';
+  return `<span class="tag tag-muted">${s}</span>`;
+};
+DATA.roadmap.forEach(item => {
+  rm.insertAdjacentHTML("beforeend", `<li>
+    <span class="id">${item.id}</span>
+    <span>${item.name}</span>
+    <span style="margin-left:auto">${statusTag(item.status)}</span>
+  </li>`);
+});
+</script>
+</body>
+</html>
