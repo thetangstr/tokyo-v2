@@ -113,7 +113,7 @@ section.s{padding:6rem 2rem;max-width:1280px;margin:0 auto;position:relative}
 .holdout-body em{font-style:normal;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:.85em;padding:.05em .35em;background:rgba(196,144,0,.08);border-radius:2px}
 
 .roadmap{display:grid;grid-template-columns:repeat(7,1fr);gap:0;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;overflow:hidden}
-.r-step{padding:1.75rem 1rem;border-right:1px solid var(--chrome-border);text-align:center;background:var(--chrome);min-height:180px;display:flex;flex-direction:column;justify-content:flex-start}
+.r-step{padding:1.5rem .9rem;border-right:1px solid var(--chrome-border);text-align:center;background:var(--chrome);min-height:280px;display:flex;flex-direction:column;justify-content:flex-start}
 .r-step:last-child{border-right:none}
 .r-step .r-id{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.1em;color:var(--muted)}
 .r-step.done .r-id{color:var(--green)}
@@ -123,7 +123,14 @@ section.s{padding:6rem 2rem;max-width:1280px;margin:0 auto;position:relative}
 .r-step.done .r-icon::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--bg);font-size:.6rem;font-weight:700}
 .r-step.now .r-icon{background:var(--gold);border-color:var(--gold);box-shadow:0 0 0 4px rgba(196,144,0,.2);animation:pulse 2s ease infinite}
 .r-step .r-name{font-family:'Sora',sans-serif;font-size:.95rem;font-weight:700;color:var(--bright);margin-bottom:.4rem;letter-spacing:-.01em}
-.r-step .r-desc{font-size:.72rem;color:var(--text);line-height:1.45}
+.r-step .r-desc{font-size:.72rem;color:var(--text);line-height:1.45;flex:1}
+.r-step .r-metric{margin-top:.85rem;padding-top:.75rem;border-top:1px dashed var(--chrome-border);font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.04em;line-height:1.4}
+.r-step .r-metric .rmv{display:block;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:-.02em;color:var(--bright);margin-top:.15rem}
+.r-step.done .r-metric .rmv{color:var(--green)}
+.r-step.now .r-metric .rmv{color:var(--gold)}
+.r-step .r-metric .rmd{display:block;font-size:.58rem;color:var(--muted);margin-top:.25rem}
+.r-step .r-metric .rmd.improve{color:var(--green)}
+.r-step .r-metric .rmd.target{color:var(--gold)}
 
 .principles{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
 .principle{padding:1.5rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;border-top:2px solid var(--gold);display:flex;flex-direction:column}
@@ -359,16 +366,16 @@ footer{padding:4rem 2rem 2rem;border-top:1px solid var(--chrome-border);max-widt
   <div class="s-head">
     <div class="kicker">Milestones · Tagged in git, dated to the day</div>
     <h2>Greenfield to a real model in ~48 hours.</h2>
-    <p>Each milestone has a git tag, an architecture spec, and an independent codex audit. M0 → M4 shipped in roughly two working days. M5 (ensembles + entity embeddings) is the next big leverage; M_serve wires it all into production.</p>
+    <p>Each milestone has a git tag, an architecture spec, and an independent codex audit. M0 → M4 shipped in roughly two working days. M5 (ensembles + entity embeddings) is the next big leverage; M_serve wires it all into production. <strong>The metric on each card</strong> is QB × passing-yards Mean Absolute Error (MAE) — the model's average miss in yards, lower is better. Baseline floor was 67; we're at 51 today; the production ship-gate is ~25.</p>
   </div>
   <div class="roadmap">
-    <div class="r-step done"><div class="r-id">M0</div><div class="r-icon"></div><div class="r-name">Data layer</div><div class="r-desc">27 sources, 3-layer validator, two-tier eval.</div></div>
-    <div class="r-step done"><div class="r-id">M1</div><div class="r-icon"></div><div class="r-name">Eval harness</div><div class="r-desc">Walk-forward CV, anti-leakage gate, Ridge baseline.</div></div>
-    <div class="r-step done"><div class="r-id">M2</div><div class="r-icon"></div><div class="r-name">XGBoost</div><div class="r-desc">Same harness, target-aware objective. Tiny gains vs Ridge.</div></div>
-    <div class="r-step done"><div class="r-id">M3</div><div class="r-icon"></div><div class="r-name">EPA + NGS + opp</div><div class="r-desc">Layer 2/3/4 features added. <strong>XGB pulls ahead 17-25%</strong> vs M2.</div></div>
-    <div class="r-step done"><div class="r-id">M4</div><div class="r-icon"></div><div class="r-name">Player attrs<br>+ SnapForm v1</div><div class="r-desc">Static player features + injury/weather/form formulas for Adam.</div></div>
-    <div class="r-step now"><div class="r-id">M5</div><div class="r-icon"></div><div class="r-name">Ensembles +<br>embeddings</div><div class="r-desc">Linear+tree ensemble; entity embeddings for QB/team/coach.</div></div>
-    <div class="r-step"><div class="r-id">M_serve</div><div class="r-icon"></div><div class="r-name">Live snapshot</div><div class="r-desc">Point-in-time API layer with per-source staleness contract.</div></div>
+    <div class="r-step done"><div class="r-id">M0</div><div class="r-icon"></div><div class="r-name">Data layer</div><div class="r-desc">27 sources, 3-layer validator, two-tier eval.</div><div class="r-metric">QB pass yds MAE<span class="rmv">data ready</span><span class="rmd">no model yet</span></div></div>
+    <div class="r-step done"><div class="r-id">M1</div><div class="r-icon"></div><div class="r-name">Eval harness</div><div class="r-desc">Walk-forward CV, anti-leakage gate, Ridge baseline.</div><div class="r-metric">QB pass yds MAE<span class="rmv">67.05</span><span class="rmd">baseline floor</span></div></div>
+    <div class="r-step done"><div class="r-id">M2</div><div class="r-icon"></div><div class="r-name">XGBoost</div><div class="r-desc">Same harness, target-aware objective. Tiny gains vs Ridge.</div><div class="r-metric">QB pass yds MAE<span class="rmv">64.54</span><span class="rmd improve">−3.7% vs M1</span></div></div>
+    <div class="r-step done"><div class="r-id">M3</div><div class="r-icon"></div><div class="r-name">EPA + NGS + opp</div><div class="r-desc">Layer 2/3/4 features added. <strong>XGB pulls ahead 17-25%</strong> vs M2.</div><div class="r-metric">QB pass yds MAE<span class="rmv">51.75</span><span class="rmd improve">−22.8% vs M1</span></div></div>
+    <div class="r-step done"><div class="r-id">M4</div><div class="r-icon"></div><div class="r-name">Player attrs<br>+ SnapForm v1</div><div class="r-desc">Static player features + injury/weather/form formulas for Adam.</div><div class="r-metric">QB pass yds MAE<span class="rmv">51.35</span><span class="rmd improve">−23.4% vs M1</span></div></div>
+    <div class="r-step now"><div class="r-id">M5</div><div class="r-icon"></div><div class="r-name">Ensembles +<br>embeddings</div><div class="r-desc">Linear+tree ensemble; entity embeddings for QB/team/coach.</div><div class="r-metric">QB pass yds MAE<span class="rmv">~38-44</span><span class="rmd target">target (forecast)</span></div></div>
+    <div class="r-step"><div class="r-id">M_serve</div><div class="r-icon"></div><div class="r-name">Live snapshot</div><div class="r-desc">Point-in-time API layer with per-source staleness contract.</div><div class="r-metric">QB pass yds MAE<span class="rmv">≤25</span><span class="rmd target">PRD ship-gate</span></div></div>
   </div>
 </section>
 
