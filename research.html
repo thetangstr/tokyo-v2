@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snapcount — Architecture</title>
+<meta name="description" content="The data layer, eval harness, validation system, and live-snapshot contract that powers Snapcount. Walk-forward verified. Anti-leakage at split-time. 2025 quarantined.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e14;--chrome:#141821;--chrome-2:#1a1e28;--chrome-border:#252a38;
+  --gold:#c49000;--gold-bright:#e6b030;
+  --live:#e53935;--blue:#60a0ff;--green:#4caf50;--purple:#a060ff;
+  --bright:#f0f2f5;--text:#b8bcc6;--muted:#5a6070;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 1.5rem;background:rgba(10,14,20,.85);backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-color .3s}
+nav.scrolled{border-bottom-color:var(--chrome-border)}
+.nav-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:1.05rem;color:var(--bright);letter-spacing:-.02em;text-decoration:none}
+.logo span{color:var(--gold)}
+.nav-links{display:flex;gap:1.5rem;list-style:none;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.78rem;font-weight:500;letter-spacing:.03em;transition:color .2s}
+.nav-links a:hover,.nav-links a.current{color:var(--bright)}
+.nav-links a.current{color:var(--gold)}
+.nav-links a.cta{color:var(--gold);border:1px solid var(--gold);padding:.4rem .85rem;border-radius:3px;transition:all .2s}
+.nav-links a.cta:hover{background:var(--gold);color:var(--bg)}
+
+/* hero */
+.hero{padding:8rem 2rem 4rem;max-width:1280px;margin:0 auto}
+.kicker{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:1.5rem}
+.kicker .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-right:.6rem;animation:pulse 2s ease infinite;vertical-align:middle}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.hero h1{font-family:'Sora',sans-serif;font-size:clamp(2.25rem,5vw,3.75rem);font-weight:800;letter-spacing:-.04em;line-height:1.05;color:var(--bright);margin-bottom:1.5rem;max-width:900px}
+.hero h1 em{font-style:normal;color:var(--gold);font-weight:700}
+.hero-sub{font-size:1.1rem;color:var(--text);max-width:760px;line-height:1.7}
+
+/* TOC */
+.toc{background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;padding:1.5rem 1.75rem;margin:2.5rem 0 0;display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
+.toc a{color:var(--text);text-decoration:none;font-size:.85rem;padding:.6rem 0;border-left:2px solid transparent;padding-left:.85rem;transition:all .2s;display:flex;flex-direction:column}
+.toc a:hover{border-left-color:var(--gold);color:var(--bright)}
+.toc a span{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.1em;margin-bottom:.2rem}
+
+/* sections */
+section.s{padding:5rem 2rem;max-width:1280px;margin:0 auto}
+.s-head{margin-bottom:2.5rem}
+.s-head .kicker{margin-bottom:.85rem}
+.s-head h2{font-family:'Sora',sans-serif;font-size:clamp(1.7rem,3.5vw,2.5rem);font-weight:700;color:var(--bright);letter-spacing:-.03em;margin-bottom:1rem;line-height:1.15}
+.s-head p{font-size:1rem;color:var(--text);max-width:760px;line-height:1.65}
+
+/* pipeline svg flow */
+.flow-svg{background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;padding:2rem;margin-bottom:2rem;overflow-x:auto}
+.flow-svg svg{display:block;width:100%;min-width:900px;height:auto}
+
+.flow-text{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.flow-text-card{padding:1.25rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;border-left:2px solid var(--gold)}
+.flow-text-card h4{font-family:'Sora',sans-serif;font-size:.95rem;color:var(--bright);margin-bottom:.4rem;letter-spacing:-.01em}
+.flow-text-card .ftc-mono{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--gold);letter-spacing:.06em;margin-bottom:.6rem;text-transform:uppercase}
+.flow-text-card p{font-size:.85rem;color:var(--text);line-height:1.55}
+
+/* tables */
+.tbl-wrap{background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;overflow:hidden;overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.78rem;min-width:680px}
+.tbl th{text-align:left;padding:.85rem 1.25rem;background:var(--chrome-2);color:var(--muted);font-weight:600;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--chrome-border)}
+.tbl td{padding:.85rem 1.25rem;border-bottom:1px solid rgba(37,42,56,.4);color:var(--text);vertical-align:top;line-height:1.5}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(196,144,0,0.04)}
+.tbl .kind{color:var(--bright);font-weight:700;font-family:'Sora',sans-serif;font-size:.85rem;letter-spacing:-.01em}
+.tbl .kind .badge{display:inline-block;padding:.15em .45em;background:var(--gold);color:var(--bg);border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;margin-right:.5rem;letter-spacing:.04em}
+.tbl .kind.b{}
+.tbl .kind.b .badge{background:var(--blue)}
+.tbl .kind.c .badge{background:var(--green)}
+.tbl .kind.d .badge{background:var(--purple)}
+.tbl .kind.z .badge{background:var(--muted)}
+.tbl code{font-size:.95em;color:var(--gold);background:rgba(196,144,0,.08);padding:.05em .3em;border-radius:2px}
+.tbl .ok{color:var(--green);font-weight:700}
+.tbl .blocked{color:var(--live);font-weight:700}
+.tbl .warn{color:var(--gold);font-weight:700}
+
+/* split panes (validation/holdout) */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem}
+.split-pane{padding:1.75rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;border-top:2px solid var(--accent)}
+.split-pane.v{--accent:var(--blue)}
+.split-pane.h{--accent:var(--gold)}
+.split-pane .sp-tag{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.5rem;font-weight:700}
+.split-pane h3{font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:700;color:var(--bright);margin-bottom:.85rem;letter-spacing:-.02em}
+.split-pane p{font-size:.9rem;color:var(--text);line-height:1.6;margin-bottom:1rem}
+.split-pane .pred{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--gold);background:var(--bg);border:1px solid var(--chrome-border);border-radius:3px;padding:.65rem .85rem;letter-spacing:.04em;margin-top:.85rem}
+.split-pane ul{list-style:none;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text);margin-top:.85rem}
+.split-pane ul li{padding:.25rem 0;display:flex;justify-content:space-between;border-bottom:1px solid rgba(37,42,56,.4)}
+.split-pane ul li:last-child{border-bottom:none}
+.split-pane ul li .lk{color:var(--muted)}
+.split-pane ul li .lv{color:var(--bright);font-weight:600}
+
+/* live vs training surface */
+.surface{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem}
+.surface-pane{padding:1.5rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px}
+.surface-pane.allowed{border-left:3px solid var(--green)}
+.surface-pane.blocked{border-left:3px solid var(--live)}
+.surface-pane h3{font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:700;color:var(--bright);margin-bottom:.4rem;letter-spacing:-.01em}
+.surface-pane h3 .pl{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.08em;margin-left:.4rem;font-weight:700}
+.surface-pane.blocked h3 .pl{color:var(--live)}
+.surface-pane p{font-size:.82rem;color:var(--text);margin-bottom:1rem;line-height:1.55}
+.cols-list{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text);columns:2;column-gap:1.25rem;line-height:1.85}
+.cols-list .col{break-inside:avoid;display:block;color:var(--bright)}
+
+/* validator layers */
+.vlayers{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem}
+.vlayer{padding:1.6rem;background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;border-top:3px solid var(--accent)}
+.vlayer.l1{--accent:var(--live)}
+.vlayer.l2{--accent:var(--gold)}
+.vlayer.l3{--accent:var(--blue)}
+.vlayer .vl-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.1em;margin-bottom:.4rem}
+.vlayer h3{font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--bright);margin-bottom:.5rem;letter-spacing:-.02em}
+.vlayer .vl-tag{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.85rem}
+.vlayer p{font-size:.85rem;color:var(--text);line-height:1.6;margin-bottom:.85rem}
+.vlayer ul{list-style:none;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text);margin-top:.5rem}
+.vlayer ul li{padding:.25rem 0;border-bottom:1px solid rgba(37,42,56,.4);position:relative;padding-left:.85rem}
+.vlayer ul li:last-child{border-bottom:none}
+.vlayer ul li::before{content:'·';position:absolute;left:0;color:var(--accent)}
+
+footer{padding:3rem 2rem 2rem;border-top:1px solid var(--chrome-border);max-width:1280px;margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:.06em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+
+@media(max-width:980px){
+  .toc{grid-template-columns:repeat(2,1fr)}
+  .flow-text,.split,.surface,.vlayers{grid-template-columns:1fr}
+  .cols-list{columns:1}
+  nav .nav-links li:not(:last-child){display:none}
+}
+</style>
+</style>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="/">Snap<span>count</span></a>
+    <ul class="nav-links">
+      <li><a href="/#products">Products</a></li>
+      <li><a href="/#proof">Numbers</a></li>
+      <li><a href="/#roadmap">Roadmap</a></li>
+      <li><a href="/architecture.html">Architecture</a></li>
+      <li><a href="/nflooker.html">NFLooker</a></li>
+      <li><a href="/research.html" class="current">Research</a></li>
+      <li><a href="/story.html">Story</a></li>
+      <li><a href="/slides.html" class="cta">Deck →</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="kicker"><span class="dot"></span>Research log · Public autoresearch sweep</div>
+  <h1>Every experiment.<br>Every win.<br>Every <em>revert</em>.</h1>
+  <p class="hero-sub">
+    We run autonomous research loops on every modeling milestone. One file the agent edits, one metric, one fixed budget, git keep-or-revert as the only acceptance gate. Below is the complete log of the first such loop — 17 experiments that tuned the per-player Bayesian shrinkage on QB passing TDs, lifting the composite metric +25.5% over the published baseline. No cherry-picked results. No deleted runs.
+  </p>
+
+  <div class="toc">
+    <a href="#methodology"><span>§ 01</span>The methodology</a>
+    <a href="#first-loop"><span>§ 02</span>First loop · M6.2 sweep</a>
+    <a href="#chart"><span>§ 03</span>Composite progression</a>
+    <a href="#ledger"><span>§ 04</span>17-experiment ledger</a>
+    <a href="#promoted"><span>§ 05</span>What landed in production</a>
+    <a href="#open-loops"><span>§ 06</span>Open research loops</a>
+  </div>
+</header>
+
+<section class="s" id="methodology">
+  <div class="s-head">
+    <div class="kicker">§ 01 · The methodology</div>
+    <h2>Karpathy-style autoresearch, applied to ML modeling.</h2>
+    <p>The principle generalizes beyond LLM training: single mutable file, single metric, fixed budget, git keep-or-revert. We adopted it for SnapScore modeling lanes. Every milestone with a directed search space — hyperparameter sweeps, feature ablation, ensemble blend tuning — runs through this harness.</p>
+  </div>
+
+  <div class="flow-text">
+    <div class="flow-text-card">
+      <div class="ftc-mono">Rule 01 · One file edits</div>
+      <h4>experiment.py is the only thing that changes per run</h4>
+      <p>Stable infrastructure (feature pipeline, eval harness, metrics) lives in <code>snapcore/</code>. The agent edits exactly one file per experiment — model logic, hyperparameters, structural changes. Diffs are tiny and reviewable.</p>
+    </div>
+    <div class="flow-text-card">
+      <div class="ftc-mono">Rule 02 · One metric</div>
+      <h4>program.md locks the success criterion</h4>
+      <p>Single number. No metric-shopping mid-loop. For the M6.2 sweep, the locked metric was <code>composite = recall_pos − 2·|ECE − 0.05|</code> — rewards tail-class recall, penalizes drift from the 5% calibration target.</p>
+    </div>
+    <div class="flow-text-card">
+      <div class="ftc-mono">Rule 03 · Fixed budget</div>
+      <h4>Wall-clock per experiment + total loop budget</h4>
+      <p>M6.2: 25-second per-experiment budget (one full walk-forward eval). Total loop budget: 30 experiments. We hit "no improvement for 5 consecutive runs" at experiment 17 and called it.</p>
+    </div>
+    <div class="flow-text-card">
+      <div class="ftc-mono">Rule 04 · Git keeps or reverts</div>
+      <h4>The composite metric is the only judge</h4>
+      <p>If composite beats current best → <code>git commit</code>. If not → <code>git checkout HEAD -- experiment.py</code> and revert. No subjective "this seems better." Every commit in the research dir corresponds to a kept experiment; every reverted file goes only into <code>results.tsv</code>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="first-loop">
+  <div class="s-head">
+    <div class="kicker">§ 02 · First loop</div>
+    <h2>M6.2 shrinkage hyperparameter sweep — QB×passing_tds.</h2>
+    <p>The M6.2 shipped framework (per-player Dirichlet-multinomial shrinkage on top of XGB) had its v1 hyperparameters chosen by hand: <code>k=8, w=0.5, uniform prior weights</code>. The autoresearch loop tested whether those settings were locally optimal — and if not, what's better.</p>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr><th>Element</th><th>Value</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="kind">Hypothesis</td><td>v1 settings are too conservative on the cohort prior, killing positive-class recall</td></tr>
+        <tr><td class="kind">Single metric</td><td><code>composite = P(argmax≥2 | truth≥2) − 2·|ECE − 0.05|</code></td></tr>
+        <tr><td class="kind">Search space</td><td><code>prior_strength_k ∈ [1, 25]</code>, <code>model_trust_w ∈ [0.3, 1.0]</code>, optional per-class prior weights</td></tr>
+        <tr><td class="kind">Budget</td><td>~25 sec/experiment, 30-experiment loop cap</td></tr>
+        <tr><td class="kind">Baseline (target to beat)</td><td>v1 composite <code>0.3189</code></td></tr>
+        <tr><td class="kind">Min-bar success</td><td>composite > <code>0.3689</code> (baseline + 0.05)</td></tr>
+        <tr><td class="kind">Final winner</td><td>exp 15: <code>k=15, w=0.5, prior_weights=[1, 1, 1.3, 4]</code> · composite <code>0.4002</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="s" id="chart">
+  <div class="s-head">
+    <div class="kicker">§ 03 · Composite progression</div>
+    <h2>17 experiments mapped against the single metric.</h2>
+    <p>Each dot is one experiment. Gold dots are kept (committed), gray dots are reverted. The faint gold line is the running best.</p>
+  </div>
+
+  <div style="background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;padding:1.5rem">
+<svg viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto">
+  <line x1="60" y1="202.5" x2="976" y2="202.5" stroke="var(--chrome-border)" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="52" y="206.5" font-size="11" fill="var(--muted)" text-anchor="end">0.30</text>
+<line x1="60" y1="125.8" x2="976" y2="125.8" stroke="var(--chrome-border)" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="52" y="129.8" font-size="11" fill="var(--muted)" text-anchor="end">0.35</text>
+<line x1="60" y1="49.1" x2="976" y2="49.1" stroke="var(--chrome-border)" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="52" y="53.1" font-size="11" fill="var(--muted)" text-anchor="end">0.40</text>
+  <polyline points="60.0,173.5 117.2,173.5 174.5,173.5 231.8,173.5 289.0,173.5 346.2,143.1 403.5,143.1 460.8,143.1 518.0,143.1 575.2,136.2 632.5,111.5 689.8,80.1 747.0,80.1 804.2,79.5 861.5,48.8 918.8,48.8 976.0,48.8" stroke="var(--gold)" stroke-width="2" fill="none" opacity="0.4"/>
+  <circle cx="60.0" cy="173.5" r="5" fill="var(--gold)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="117.2" cy="259.8" r="5" fill="var(--muted)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="174.5" cy="190.0" r="5" fill="var(--muted)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="231.8" cy="267.6" r="5" fill="var(--muted)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="289.0" cy="193.2" r="5" fill="var(--muted)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="346.2" cy="143.1" r="5" fill="var(--gold)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="403.5" cy="148.7" r="5" fill="var(--muted)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="460.8" cy="154.2" r="5" fill="var(--muted)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="518.0" cy="153.3" r="5" fill="var(--muted)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="575.2" cy="136.2" r="5" fill="var(--gold)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="632.5" cy="111.5" r="5" fill="var(--gold)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="689.8" cy="80.1" r="5" fill="var(--gold)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="747.0" cy="83.4" r="5" fill="var(--muted)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="804.2" cy="79.5" r="5" fill="var(--gold)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="861.5" cy="48.8" r="5" fill="var(--gold)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="918.8" cy="68.4" r="5" fill="var(--muted)" stroke="var(--bg)" stroke-width="2"/>
+<circle cx="976.0" cy="72.9" r="5" fill="var(--muted)" stroke="var(--bg)" stroke-width="2"/>
+
+  
+<line x1="60" y1="173.5" x2="976" y2="173.5" stroke="var(--muted)" stroke-width="1" stroke-dasharray="6,4" opacity="0.5"/>
+<text x="976" y="167.5" font-size="10" fill="var(--muted)" text-anchor="end">v1 baseline 0.3189</text>
+<line x1="60" y1="48.8" x2="976" y2="48.8" stroke="var(--gold)" stroke-width="1" stroke-dasharray="6,4" opacity="0.7"/>
+<text x="976" y="42.8" font-size="10" fill="var(--gold)" text-anchor="end">exp 15 0.4002 (+25.5%)</text>
+
+  <text x="60.0" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">1</text>
+<text x="117.2" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">2</text>
+<text x="174.5" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">3</text>
+<text x="231.8" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">4</text>
+<text x="289.0" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">5</text>
+<text x="346.2" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">6</text>
+<text x="403.5" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">7</text>
+<text x="460.8" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">8</text>
+<text x="518.0" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">9</text>
+<text x="575.2" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">10</text>
+<text x="632.5" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">11</text>
+<text x="689.8" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">12</text>
+<text x="747.0" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">13</text>
+<text x="804.2" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">14</text>
+<text x="861.5" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">15</text>
+<text x="918.8" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">16</text>
+<text x="976.0" y="288.0" font-size="10" fill="var(--muted)" text-anchor="middle">17</text>
+
+  <text x="500" y="312" font-size="11" fill="var(--muted)" text-anchor="middle">experiment number</text>
+</svg>
+  </div>
+</section>
+
+<section class="s" id="ledger">
+  <div class="s-head">
+    <div class="kicker">§ 04 · Full experiment ledger</div>
+    <h2>Every run, every parameter, every outcome.</h2>
+    <p>Same data that lives in <code>snapcore/research/m6_2_shrinkage_sweep/results.tsv</code> in our repo. No deletions.</p>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Experiment</th>
+          <th class="num">k</th>
+          <th class="num">w</th>
+          <th>Prior weights</th>
+          <th class="num">Composite</th>
+          <th class="num">Recall<sub>pos</sub></th>
+          <th class="num">ECE</th>
+          <th class="num">Δ vs prev best</th>
+          <th>Outcome</th>
+        </tr>
+      </thead>
+      <tbody>
+<tr>
+        <td class="num">1</td>
+        <td><code>v1-baseline-repro</code></td>
+        <td class="num">8.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">uniform</code></td>
+        <td class="num">0.3189</td>
+        <td class="num">0.366</td>
+        <td class="num">0.0736</td>
+        <td class="num"><span style="color:var(--green)">+0.0000</span></td>
+        <td><span class="tag tag-good">KEEP</span></td>
+    </tr>
+<tr>
+        <td class="num">2</td>
+        <td><code>exp02-pure-xgb</code></td>
+        <td class="num">8.0</td>
+        <td class="num">1.0</td>
+        <td><code style="font-size:.7rem">uniform</code></td>
+        <td class="num">0.2627</td>
+        <td class="num">0.3922</td>
+        <td class="num">0.1147</td>
+        <td class="num"><span style="color:var(--muted)">-0.0562</span></td>
+        <td><span class="tag tag-muted">revert</span></td>
+    </tr>
+<tr>
+        <td class="num">3</td>
+        <td><code>exp03-w07-k8</code></td>
+        <td class="num">8.0</td>
+        <td class="num">0.7</td>
+        <td><code style="font-size:.7rem">uniform</code></td>
+        <td class="num">0.3082</td>
+        <td class="num">0.3791</td>
+        <td class="num">0.0854</td>
+        <td class="num"><span style="color:var(--muted)">-0.0107</span></td>
+        <td><span class="tag tag-muted">revert</span></td>
+    </tr>
+<tr>
+        <td class="num">4</td>
+        <td><code>exp04-w03-k8</code></td>
+        <td class="num">8.0</td>
+        <td class="num">0.3</td>
+        <td><code style="font-size:.7rem">uniform</code></td>
+        <td class="num">0.2576</td>
+        <td class="num">0.3464</td>
+        <td class="num">0.0944</td>
+        <td class="num"><span style="color:var(--muted)">-0.0613</span></td>
+        <td><span class="tag tag-muted">revert</span></td>
+    </tr>
+<tr>
+        <td class="num">5</td>
+        <td><code>exp05-w05-k4</code></td>
+        <td class="num">4.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">uniform</code></td>
+        <td class="num">0.3061</td>
+        <td class="num">0.366</td>
+        <td class="num">0.08</td>
+        <td class="num"><span style="color:var(--muted)">-0.0128</span></td>
+        <td><span class="tag tag-muted">revert</span></td>
+    </tr>
+<tr>
+        <td class="num">6</td>
+        <td><code>exp06-w05-k15</code></td>
+        <td class="num">15.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">uniform</code></td>
+        <td class="num">0.3387</td>
+        <td class="num">0.366</td>
+        <td class="num">0.0636</td>
+        <td class="num"><span style="color:var(--green)">+0.0198</span></td>
+        <td><span class="tag tag-good">KEEP</span></td>
+    </tr>
+<tr>
+        <td class="num">7</td>
+        <td><code>exp07-w05-k25</code></td>
+        <td class="num">25.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">uniform</code></td>
+        <td class="num">0.3351</td>
+        <td class="num">0.3529</td>
+        <td class="num">0.0589</td>
+        <td class="num"><span style="color:var(--muted)">-0.0036</span></td>
+        <td><span class="tag tag-muted">revert</span></td>
+    </tr>
+<tr>
+        <td class="num">8</td>
+        <td><code>exp08-w05-k18</code></td>
+        <td class="num">18.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">uniform</code></td>
+        <td class="num">0.3315</td>
+        <td class="num">0.3529</td>
+        <td class="num">0.0607</td>
+        <td class="num"><span style="color:var(--muted)">-0.0072</span></td>
+        <td><span class="tag tag-muted">revert</span></td>
+    </tr>
+<tr>
+        <td class="num">9</td>
+        <td><code>exp09-w05-k12</code></td>
+        <td class="num">12.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">uniform</code></td>
+        <td class="num">0.3321</td>
+        <td class="num">0.366</td>
+        <td class="num">0.067</td>
+        <td class="num"><span style="color:var(--muted)">-0.0066</span></td>
+        <td><span class="tag tag-muted">revert</span></td>
+    </tr>
+<tr>
+        <td class="num">10</td>
+        <td><code>exp10-boost-c3plus</code></td>
+        <td class="num">15.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">[1.00,1.00,1.00,2.00]</code></td>
+        <td class="num">0.3432</td>
+        <td class="num">0.366</td>
+        <td class="num">0.0614</td>
+        <td class="num"><span style="color:var(--green)">+0.0045</span></td>
+        <td><span class="tag tag-good">KEEP</span></td>
+    </tr>
+<tr>
+        <td class="num">11</td>
+        <td><code>exp11-boost-c3plus-3x</code></td>
+        <td class="num">15.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">[1.00,1.00,1.00,3.00]</code></td>
+        <td class="num">0.3593</td>
+        <td class="num">0.3791</td>
+        <td class="num">0.0599</td>
+        <td class="num"><span style="color:var(--green)">+0.0161</span></td>
+        <td><span class="tag tag-good">KEEP</span></td>
+    </tr>
+<tr>
+        <td class="num">12</td>
+        <td><code>exp12-boost-c3plus-4x</code></td>
+        <td class="num">15.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">[1.00,1.00,1.00,4.00]</code></td>
+        <td class="num">0.3798</td>
+        <td class="num">0.3922</td>
+        <td class="num">0.0562</td>
+        <td class="num"><span style="color:var(--green)">+0.0205</span></td>
+        <td><span class="tag tag-good">KEEP</span></td>
+    </tr>
+<tr>
+        <td class="num">13</td>
+        <td><code>exp13-boost-c3plus-5x</code></td>
+        <td class="num">15.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">[1.00,1.00,1.00,5.00]</code></td>
+        <td class="num">0.3776</td>
+        <td class="num">0.3987</td>
+        <td class="num">0.0606</td>
+        <td class="num"><span style="color:var(--muted)">-0.0022</span></td>
+        <td><span class="tag tag-muted">revert</span></td>
+    </tr>
+<tr>
+        <td class="num">14</td>
+        <td><code>exp14-boost-c2-c3plus</code></td>
+        <td class="num">15.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">[1.00,1.00,1.50,4.00]</code></td>
+        <td class="num">0.3802</td>
+        <td class="num">0.4052</td>
+        <td class="num">0.0625</td>
+        <td class="num"><span style="color:var(--green)">+0.0004</span></td>
+        <td><span class="tag tag-good">KEEP</span></td>
+    </tr>
+<tr>
+        <td class="num">15</td>
+        <td><code>exp15-c2-light</code></td>
+        <td class="num">15.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">[1.00,1.00,1.30,4.00]</code></td>
+        <td class="num">0.4002</td>
+        <td class="num">0.4052</td>
+        <td class="num">0.0525</td>
+        <td class="num"><span style="color:var(--green)">+0.0200</span></td>
+        <td><span class="tag tag-good">KEEP</span></td>
+    </tr>
+<tr>
+        <td class="num">16</td>
+        <td><code>exp16-c2-lighter</code></td>
+        <td class="num">15.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">[1.00,1.00,1.20,4.00]</code></td>
+        <td class="num">0.3874</td>
+        <td class="num">0.3987</td>
+        <td class="num">0.0556</td>
+        <td class="num"><span style="color:var(--muted)">-0.0128</span></td>
+        <td><span class="tag tag-muted">revert</span></td>
+    </tr>
+<tr>
+        <td class="num">17</td>
+        <td><code>exp17-c0-downweight</code></td>
+        <td class="num">15.0</td>
+        <td class="num">0.5</td>
+        <td><code style="font-size:.7rem">[0.70,1.00,1.30,4.00]</code></td>
+        <td class="num">0.3845</td>
+        <td class="num">0.4052</td>
+        <td class="num">0.0603</td>
+        <td class="num"><span style="color:var(--muted)">-0.0157</span></td>
+        <td><span class="tag tag-muted">revert</span></td>
+    </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="s" id="promoted">
+  <div class="s-head">
+    <div class="kicker">§ 05 · What landed in production</div>
+    <h2>The winner (exp 15) became the M6.2 default.</h2>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr><th>Metric</th><th class="num">M6.2 v1 (shipped earlier)</th><th class="num">M6.2-tuned (after sweep)</th><th class="num">Δ</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="kind">QB passing_tds composite</td><td class="num">0.3189</td><td class="num">0.4002</td><td class="num"><strong style="color:var(--green)">+25.5%</strong></td></tr>
+        <tr><td class="kind">QB ECE</td><td class="num">0.0736</td><td class="num">0.0525</td><td class="num">closer to 0.05 target</td></tr>
+        <tr><td class="kind">QB class 3+ recall (multi-TD)</td><td class="num">0.086</td><td class="num">0.224</td><td class="num"><strong style="color:var(--green)">+160%</strong></td></tr>
+        <tr><td class="kind">QB Brier</td><td class="num">0.7269</td><td class="num">0.7318</td><td class="num">small cost, calibration gain</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footnote" style="margin-top:1.5rem;color:var(--muted);font-size:.9rem">
+    Production code at <code>snapcore/models/shrinkage.py</code> updated with new defaults
+    (<code>prior_strength_k=15</code>, <code>model_trust_w=0.5</code>, plus target-aware
+    <code>prior_class_weights</code> for 4-class TD targets). Three-class TD targets
+    (RB/WR/TE) got the <code>k</code> improvement but kept uniform prior weights pending
+    their own sweeps.
+  </p>
+</section>
+
+<section class="s" id="open-loops">
+  <div class="s-head">
+    <div class="kicker">§ 06 · Open research loops</div>
+    <h2>What's running right now.</h2>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr><th>Loop</th><th>Goal</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="kind">m7_closing_line_validation</td>
+          <td>Independently validate the "closing line is #1 predictor" claim before our data lane commits to building a closing-line ingest pipeline</td>
+          <td>2 of 3 hypotheses answered. H1 (is nflverse's spread_line the closing line?) — yes, ~80% confidence. H2 (is closing line a big predictor in our pipeline?) — surprisingly small: 0.35 yards MAE lift. H3 (does line-movement add signal?) queued.</td>
+        </tr>
+        <tr>
+          <td class="kind">m6.2 RB / WR / TE TD sweeps</td>
+          <td>Adapt the QB-tuned shrinkage hyperparameters to the 3-class TD targets (RB/WR/TE) which have different class distributions</td>
+          <td>Queued. Will run when a clear leverage gain is justified — first the closing-line / DvP / injury-severity higher-impact work.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer style="border-top:1px solid var(--chrome-border);padding:3rem 2rem 4rem;max-width:1280px;margin:0 auto;color:var(--muted);font-size:.78rem">
+  <p>Snapcount · Research log · Generated from <code>snapcore/research/*/results.tsv</code>. Re-run <code>build_research_page.py</code> to refresh.</p>
+</footer>
+
+</body>
+</html>
