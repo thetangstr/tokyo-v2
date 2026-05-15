@@ -86,7 +86,7 @@ section.s{padding:6rem 2rem;max-width:1280px;margin:0 auto;position:relative}
 .pipe-desc{font-size:.78rem;color:var(--text);line-height:1.5;flex:1}
 .pipe-stat{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--gold);letter-spacing:.04em;padding-top:.6rem;border-top:1px dashed var(--chrome-border);margin-top:.6rem}
 
-.proof-wrap{background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;overflow:hidden}
+.proof-wrap{background:var(--chrome);border:1px solid var(--chrome-border);border-radius:4px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .proof-head{display:flex;justify-content:space-between;align-items:baseline;padding:1.1rem 1.5rem;background:var(--chrome-2);border-bottom:1px solid var(--chrome-border);flex-wrap:wrap;gap:1rem}
 .proof-head .ph-title{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
 .proof-head .ph-sub{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:.04em}
@@ -219,7 +219,7 @@ nav.scrolled{border-bottom-color:var(--chrome-border)}
 @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
 
 /* ========== SECTION 2: LIVE DEMO ========== */
-.demo{padding:4rem 2rem 6rem;max-width:1400px;margin:0 auto}
+.demo{padding:4rem 2rem 6rem;max-width:1400px;margin:0 auto;scroll-margin-top:64px}
 .demo-header{text-align:center;margin-bottom:2.5rem}
 .demo-header h2{font-family:'Sora',sans-serif;font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:700;color:var(--bright);letter-spacing:-.03em;margin-bottom:.5rem}
 .demo-header p{font-size:.95rem;color:var(--muted);max-width:580px;margin:0 auto}
@@ -613,6 +613,7 @@ footer p{font-size:.72rem;color:var(--muted)}
       <li><a href="#products">Products</a></li>
       <li><a href="#pipeline">How it works</a></li>
       <li><a href="#proof">Numbers</a></li>
+      <li><a href="/demo/">Demo</a></li>
       <li><a href="#roadmap">Roadmap</a></li>
       <li><a href="/architecture.html">Architecture</a></li>
       <li><a href="/nflooker.html">NFLooker</a></li>
@@ -644,44 +645,6 @@ footer p{font-size:.72rem;color:var(--muted)}
 
   <div class="scroll-hint">Scroll<span class="arrow"></span></div>
 </header>
-
-<section class="s fade-in" id="products">
-  <div class="s-head">
-    <div class="kicker">Product surface · Four agents, one stack</div>
-    <h2>Four products. One feedback loop.</h2>
-    <p>Every prediction Snapcount ships is the output of four cooperating systems: <strong>SnapScore</strong> learns from history, <strong>SnapForm</strong> adjusts for the present, <strong>SnapPro</strong> turns predictions into decisions, and <strong>NFLooker</strong> explains why in plain English.</p>
-  </div>
-  <div class="products">
-    <div class="product p1">
-      <div class="product-idx">01 / SnapScore</div>
-      <div class="product-name">SnapScore</div>
-      <div class="product-tag">Per-player projection model</div>
-      <p class="product-body">XGBoost on a walk-forward harness across 2016–2024. Eight player-level targets, validated weekly on 2024 wks 9+, holdout-quarantined 2025 for the ship-gate. Anti-leakage gate enforced at split-time.</p>
-      <div class="product-meta"><span>OWNER <strong>Modeling lane</strong></span><span>STATUS <strong>M2 ✓</strong></span></div>
-    </div>
-    <div class="product p2">
-      <div class="product-idx">02 / SnapForm</div>
-      <div class="product-name">SnapForm</div>
-      <div class="product-tag">Recency / injury / weather adjuster</div>
-      <p class="product-body">Closed-form formulas that translate live signals into a multiplier on SnapScore baselines. Injury decay curves, weather penalties, snap-share trajectories. Authored under <code>snapform/formulas/</code>; refreshed weekly by Adam.</p>
-      <div class="product-meta"><span>OWNER <strong>Adam (news)</strong></span><span>STATUS <strong>v1 in flight</strong></span></div>
-    </div>
-    <div class="product p3">
-      <div class="product-idx">03 / SnapPro</div>
-      <div class="product-name">SnapPro</div>
-      <div class="product-tag">API + correlation engine</div>
-      <p class="product-body">Wraps SnapScore × SnapForm into <code>POST /api/snapscore/predict</code> with a calibrated correlation matrix. Underwrites parlays, lineups, prop combos. B2B distribution surface.</p>
-      <div class="product-meta"><span>OWNER <strong>TB12 (serving)</strong></span><span>STATUS <strong>v1 wrap</strong></span></div>
-    </div>
-    <div class="product p4">
-      <div class="product-idx">04 / NFLooker</div>
-      <div class="product-name">NFLooker</div>
-      <div class="product-tag">Domain-explanation LLM</div>
-      <p class="product-body">A small fine-tuned model that explains every prediction in plain English. <code>/explain</code>, <code>/reason</code>, <code>/simulate</code> endpoints. Trained on SnapScore's SHAP traces + sourced corpus.</p>
-      <div class="product-meta"><span>OWNER <strong>Modeling + LLM lane</strong></span><span>STATUS <strong>Spec'd</strong></span></div>
-    </div>
-  </div>
-</section>
 
 <!-- Play-sim demo restored from pre-rebrand (commit fb4ac5a) -->
 <section class="demo section-fade" id="demo">
@@ -990,6 +953,44 @@ footer p{font-size:.72rem;color:var(--muted)}
 </section>
 
 
+<section class="s fade-in" id="products">
+  <div class="s-head">
+    <div class="kicker">Product surface · Four agents, one stack</div>
+    <h2>Four products. One feedback loop.</h2>
+    <p>Every prediction Snapcount ships is the output of four cooperating systems: <strong>SnapScore</strong> learns from history, <strong>SnapForm</strong> adjusts for the present, <strong>SnapPro</strong> turns predictions into decisions, and <strong>NFLooker</strong> explains why in plain English.</p>
+  </div>
+  <div class="products">
+    <div class="product p1">
+      <div class="product-idx">01 / SnapScore</div>
+      <div class="product-name">SnapScore</div>
+      <div class="product-tag">Per-player projection model</div>
+      <p class="product-body">XGBoost on a walk-forward harness across 2016–2024. Eight player-level targets, validated weekly on 2024 wks 9+, holdout-quarantined 2025 for the ship-gate. Anti-leakage gate enforced at split-time.</p>
+      <div class="product-meta"><span>OWNER <strong>Modeling lane</strong></span><span>STATUS <strong>M2 ✓</strong></span></div>
+    </div>
+    <div class="product p2">
+      <div class="product-idx">02 / SnapForm</div>
+      <div class="product-name">SnapForm</div>
+      <div class="product-tag">Recency / injury / weather adjuster</div>
+      <p class="product-body">Closed-form formulas that translate live signals into a multiplier on SnapScore baselines. Injury decay curves, weather penalties, snap-share trajectories. Authored under <code>snapform/formulas/</code>; refreshed weekly by Adam.</p>
+      <div class="product-meta"><span>OWNER <strong>Adam (news)</strong></span><span>STATUS <strong>v1 in flight</strong></span></div>
+    </div>
+    <div class="product p3">
+      <div class="product-idx">03 / SnapPro</div>
+      <div class="product-name">SnapPro</div>
+      <div class="product-tag">API + correlation engine</div>
+      <p class="product-body">Wraps SnapScore × SnapForm into <code>POST /api/snapscore/predict</code> with a calibrated correlation matrix. Underwrites parlays, lineups, prop combos. B2B distribution surface.</p>
+      <div class="product-meta"><span>OWNER <strong>TB12 (serving)</strong></span><span>STATUS <strong>v1 wrap</strong></span></div>
+    </div>
+    <div class="product p4">
+      <div class="product-idx">04 / NFLooker</div>
+      <div class="product-name">NFLooker</div>
+      <div class="product-tag">Domain-explanation LLM</div>
+      <p class="product-body">A small fine-tuned model that explains every prediction in plain English. <code>/explain</code>, <code>/reason</code>, <code>/simulate</code> endpoints. Trained on SnapScore's SHAP traces + sourced corpus.</p>
+      <div class="product-meta"><span>OWNER <strong>Modeling + LLM lane</strong></span><span>STATUS <strong>Spec'd</strong></span></div>
+    </div>
+  </div>
+</section>
+
 <section class="s fade-in" id="pipeline">
   <div class="s-head">
     <div class="kicker">How it works · Six stages, idempotent</div>
@@ -1177,6 +1178,7 @@ footer p{font-size:.72rem;color:var(--muted)}
       <a href="/story.html">Story</a>
       <a href="/slides.html">Slides</a>
       <a href="#proof">Numbers</a>
+      <a href="/demo/">Demo</a>
     </div>
     <div class="footer-col">
       <h5>Build</h5>
@@ -1196,6 +1198,14 @@ const nav=document.querySelector('nav');
 window.addEventListener('scroll',()=>{nav.classList.toggle('scrolled',window.scrollY>10)});
 const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}}),{threshold:.1});
 document.querySelectorAll('.fade-in').forEach(e=>obs.observe(e));
+window.setTimeout(()=>{
+  const demoSection=document.getElementById('demo');
+  if(!demoSection||window.location.hash)return;
+  demoSection.scrollIntoView({
+    behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',
+    block:'start'
+  });
+},3000);
 </script>
 
 <script>
