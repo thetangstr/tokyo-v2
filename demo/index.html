@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snapcount Demo — Week 5 Simulation Preview</title>
+<meta name="description" content="A Week 5 simulation preview powered by SnapScore and generalized SnapSim, with audited predictions, actual outcomes, MAE, and provenance.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --paper:#f7f4ed;
+  --surface:#fffdf8;
+  --surface-2:#f0eadf;
+  --ink:#17202a;
+  --muted:#64707d;
+  --line:#ded5c7;
+  --gold:#a87300;
+  --green:#0f8a5f;
+  --red:#b44036;
+  --blue:#255f9f;
+  --nav:#111821;
+  --shadow:0 24px 70px rgba(45,36,23,.12);
+}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button{font:inherit}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(255,253,248,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.nav{max-width:1280px;margin:0 auto;height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.logo{font-family:Sora,sans-serif;font-weight:800;text-decoration:none;letter-spacing:-.03em}
+.logo span{color:var(--gold)}
+.links{display:flex;align-items:center;gap:18px}
+.links a{text-decoration:none;color:var(--muted);font-size:13px;font-weight:700}
+.links a:hover,.links a.current{color:var(--ink)}
+.links .deck{border:1px solid var(--gold);color:var(--gold);padding:7px 11px;border-radius:4px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(420px,.95fr);gap:36px;align-items:center;padding:92px 24px 30px}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font:700 11px/1 JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.dot{width:7px;height:7px;border-radius:999px;background:var(--green);box-shadow:0 0 0 5px rgba(15,138,95,.12)}
+h1{font-family:Sora,sans-serif;font-size:clamp(42px,5.4vw,68px);line-height:.98;letter-spacing:-.055em;margin:18px 0;color:var(--ink)}
+.lead{max-width:720px;font-size:18px;color:#3c4651;margin:0 0 28px}
+.hero-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn{border:1px solid var(--ink);background:var(--ink);color:#fffdf8;padding:12px 16px;border-radius:5px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:10px}
+.btn.secondary{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.small{padding:8px 10px;font-size:12px;border-color:var(--line);background:var(--surface);color:var(--ink)}
+.btn:hover{transform:translateY(-1px)}
+.console{background:var(--nav);color:#ecf0f3;border-radius:8px;box-shadow:var(--shadow);overflow:hidden;border:1px solid #263241}
+.console-head{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#182231;border-bottom:1px solid #2a3747;font:700 11px JetBrains Mono,monospace;letter-spacing:.12em;text-transform:uppercase;color:#aeb8c4}
+.status{display:flex;align-items:center;gap:8px;color:#9be7c1}
+.console-body{padding:18px}
+.run-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+.run-cell{background:#111923;border:1px solid #2a3747;border-radius:5px;padding:12px}
+.run-label{font:700 10px JetBrains Mono,monospace;color:#7d8a98;letter-spacing:.12em;text-transform:uppercase}
+.run-value{font-family:Sora,sans-serif;font-weight:800;color:#fff;margin-top:5px;font-size:19px;letter-spacing:-.03em}
+.run-note{font:500 12px JetBrains Mono,monospace;color:#9aa7b5;margin-top:10px;word-break:break-word}
+.terminal{background:#0b1118;border:1px solid #263241;border-radius:5px;padding:13px;font:12px/1.7 JetBrains Mono,monospace;color:#b9c6d3;min-height:150px}
+.terminal b{color:#fff}.terminal .ok{color:#9be7c1}.terminal .gold{color:#f6cd69}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:10px 0 56px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:18px;box-shadow:0 12px 30px rgba(45,36,23,.06)}
+.kpi .label{font:800 10px JetBrains Mono,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.kpi .value{font-family:Sora,sans-serif;font-size:34px;line-height:1;font-weight:800;letter-spacing:-.04em;margin-top:9px}
+.kpi .sub{font-size:13px;color:var(--muted);margin-top:8px}
+section{padding:46px 0}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:18px}
+.section-head h2{font-family:Sora,sans-serif;font-size:32px;line-height:1.05;letter-spacing:-.04em;margin:0}
+.section-head p{max-width:720px;color:var(--muted);margin:8px 0 0}
+.grid-main{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 14px 38px rgba(45,36,23,.08);overflow:hidden}
+.panel-pad{padding:18px}
+.panel-title{font:800 12px JetBrains Mono,monospace;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}
+.players{display:grid;gap:10px}
+.player{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);background:#fffaf2;border-radius:6px;padding:12px}
+.rank{font-family:Sora,sans-serif;font-weight:800;color:var(--gold)}
+.pname{font-weight:800}.meta{font-size:12px;color:var(--muted)}.mono{font-family:JetBrains Mono,monospace}
+.badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 8px;font:800 11px JetBrains Mono,monospace;border:1px solid var(--line)}
+.hit{color:var(--green);background:rgba(15,138,95,.08)}.miss{color:var(--red);background:rgba(180,64,54,.08)}
+.sim-band{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.band-cell{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:8px}
+.band-cell span{display:block;font:800 9px JetBrains Mono,monospace;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.band-cell strong{font-family:Sora,sans-serif;font-size:17px}
+.games{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.game{border:1px solid var(--line);border-radius:7px;background:#fffaf2;padding:14px}
+.game-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}
+.teams{font-family:Sora,sans-serif;font-weight:800;letter-spacing:-.02em}
+.wp{font:800 12px JetBrains Mono,monospace;color:var(--blue)}
+.team-row{display:grid;grid-template-columns:48px 1fr 1fr 1fr;gap:8px;align-items:center;font-size:13px;border-top:1px solid var(--line);padding-top:9px;margin-top:8px}
+.team-row strong{font-family:Sora,sans-serif}
+.muted{color:var(--muted)}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;min-width:880px}
+th{font:800 10px JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);text-align:left;background:var(--surface-2);padding:11px 12px;border-bottom:1px solid var(--line)}
+td{padding:11px 12px;border-bottom:1px solid rgba(222,213,199,.75);font-size:13px}
+tr:last-child td{border-bottom:0}.num{text-align:right;font-family:JetBrains Mono,monospace}
+.summary-table{display:none;margin-top:12px}.summary-table.open{display:block}
+.glossary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.term{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:16px}
+.term h3{font-family:Sora,sans-serif;margin:0 0 8px;font-size:16px}.term p{margin:0;color:var(--muted);font-size:13px}
+.footer{padding:36px 0 42px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+@media(max-width:980px){
+  .links a:not(.deck):not(.current){display:none}
+  .hero,.grid-main{grid-template-columns:1fr}
+  .kpis,.glossary{grid-template-columns:repeat(2,1fr)}
+  .games{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+  .hero{padding-top:44px}
+  .run-grid,.kpis,.glossary{grid-template-columns:1fr}
+  .player{grid-template-columns:28px 1fr}
+  .player>.badge{grid-column:2}
+  .sim-band{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <nav class="nav">
+    <a class="logo" href="/">Snap<span>count</span></a>
+    <div class="links">
+      <a href="/" >Home</a>
+      <a class="current" href="/demo/">Demo</a>
+      <a href="/architecture.html">Architecture</a>
+      <a href="/research.html">Research</a>
+      <a href="/story.html">Story</a>
+      <a class="deck" href="/slides.html">Deck</a>
+    </div>
+  </nav>
+</div>
+
+<main>
+  <section class="hero wrap">
+    <div>
+      <div class="eyebrow"><span class="dot"></span> 2025 Week 5 audited demo</div>
+      <h1>Who is going to ball out?</h1>
+      <p class="lead">A Week 5 simulation preview powered by SnapScore + generalized SnapSim. The model ranks player-week upside before kickoff, runs the full slate through a drive-by-drive simulator, then compares the forecast to actual Week 5 outcomes.</p>
+      <div class="hero-actions">
+        <button class="btn" id="run-btn">Run Week 5 simulation</button>
+        <a class="btn secondary" href="#evidence">See predicted vs actual</a>
+      </div>
+    </div>
+    <aside class="console">
+      <div class="console-head"><span>Vercel API run</span><span class="status"><span class="dot"></span><span id="api-status">ready</span></span></div>
+      <div class="console-body">
+        <div class="run-grid">
+          <div class="run-cell"><div class="run-label">Run ID</div><div class="run-value" id="run-id">pending</div></div>
+          <div class="run-cell"><div class="run-label">Slate</div><div class="run-value" id="run-slate">14 games</div></div>
+          <div class="run-cell"><div class="run-label">Simulations</div><div class="run-value" id="run-sims">300 / game</div></div>
+          <div class="run-cell"><div class="run-label">Data cutoff</div><div class="run-value">pre-W5</div></div>
+        </div>
+        <div class="terminal" id="terminal">
+          <b>$ curl /api/week5-simulation</b><br>
+          <span class="muted">Click the run button to fetch the audited Snapcount artifact.</span>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <div class="wrap">
+    <div class="kpis">
+      <div class="kpi"><div class="label">Top-10 huge-game hit rate</div><div class="value" id="kpi-top10">--</div><div class="sub">vs 43% random baseline</div></div>
+      <div class="kpi"><div class="label">Top-25 huge-game hit rate</div><div class="value" id="kpi-top25">--</div><div class="sub">player-week validation</div></div>
+      <div class="kpi"><div class="label">Top-25 SnapScore MAE</div><div class="value" id="kpi-mae">--</div><div class="sub">predicted vs actual</div></div>
+      <div class="kpi"><div class="label">Simulation coverage</div><div class="value" id="kpi-coverage">--</div><div class="sub">full Week 5 slate</div></div>
+    </div>
+  </div>
+
+  <section class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>Ball-out board tied to the simulated slate</h2>
+        <p>Each candidate links the SnapScore projection to the Week 5 game simulation for that matchup. Actuals are displayed as post-game validation, not as model inputs.</p>
+      </div>
+    </div>
+    <div class="grid-main">
+      <div class="panel"><div class="panel-pad"><div class="panel-title">Top candidates</div><div class="players" id="players"></div></div></div>
+      <div class="panel"><div class="panel-pad"><div class="panel-title">Provenance</div><div id="provenance"></div></div></div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>Full Week 5 simulation slate</h2>
+        <p>Generalized SnapSim fits play-calling models from pre-week PBP, blends team offense with opponent defensive outcome tables, and runs 300 Monte Carlo games per matchup.</p>
+      </div>
+      <button class="btn small" id="summary-toggle">Show summary table</button>
+    </div>
+    <div class="games" id="games"></div>
+    <div class="summary-table table-wrap" id="summary-table"></div>
+  </section>
+
+  <section class="wrap" id="evidence">
+    <div class="section-head">
+      <div>
+        <h2>Predicted vs actual</h2>
+        <p>MAE is computed directly from the top-25 board: absolute prediction error averaged across the displayed player-week targets.</p>
+      </div>
+    </div>
+    <div class="table-wrap" id="evidence-table"></div>
+  </section>
+
+  <section class="wrap">
+    <div class="section-head"><div><h2>Metric glossary</h2><p>Plain-English definitions for analysts reviewing the run.</p></div></div>
+    <div class="glossary" id="glossary"></div>
+  </section>
+</main>
+
+<footer class="footer wrap">
+  Snapcount demo · Precise claim: Week 5 simulation preview, powered by SnapScore + generalized SnapSim · Actual Week 5 outcomes appear only in validation views.
+</footer>
+
+<script>
+let artifact = null;
+
+const fmtPct = value => `${Math.round(value * 100)}%`;
+const fmt = value => Number.isFinite(Number(value)) ? Number(value).toFixed(1) : "--";
+const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+
+async function fetchArtifact() {
+  const status = document.getElementById("api-status");
+  const terminal = document.getElementById("terminal");
+  status.textContent = "running";
+  terminal.innerHTML = `<b>$ curl /api/week5-simulation</b><br><span class="gold">request sent...</span>`;
+  try {
+    const response = await fetch("/api/week5-simulation", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const payload = await response.json();
+    artifact = payload.artifact || payload;
+    status.textContent = "complete";
+    terminal.innerHTML = `<b>$ curl /api/week5-simulation</b><br><span class="ok">200 OK</span><br>endpoint: ${esc(payload.endpoint || "/api/week5-simulation")}<br>served_at: ${esc(payload.served_at || artifact.generated_at)}<br>run_id: <span class="gold">${esc(artifact.run_id)}</span>`;
+  } catch (err) {
+    const response = await fetch("./week5_simulation.json", { cache: "no-store" });
+    artifact = await response.json();
+    status.textContent = "fallback";
+    terminal.innerHTML = `<b>$ curl /api/week5-simulation</b><br><span class="gold">local artifact fallback</span><br>run_id: <span class="gold">${esc(artifact.run_id)}</span><br>${esc(err.message)}`;
+  }
+  render(artifact);
+}
+
+function render(data) {
+  document.getElementById("run-id").textContent = data.run_id;
+  document.getElementById("run-slate").textContent = `${data.manifest.n_games} games`;
+  document.getElementById("run-sims").textContent = `${data.manifest.n_simulations_per_game} / game`;
+  document.getElementById("kpi-top10").textContent = fmtPct(data.metrics.top_10_hit_rate);
+  document.getElementById("kpi-top25").textContent = fmtPct(data.metrics.top_25_hit_rate);
+  document.getElementById("kpi-mae").textContent = fmt(data.metrics.top_25_snapscore_mae);
+  document.getElementById("kpi-coverage").textContent = `${data.manifest.n_games}×${data.manifest.n_simulations_per_game}`;
+  renderPlayers(data.featured_players.slice(0, 10));
+  renderProvenance(data);
+  renderGames(data.games);
+  renderSummaryTable(data.games);
+  renderEvidence(data.featured_players);
+  renderGlossary(data.glossary);
+}
+
+function renderPlayers(players) {
+  document.getElementById("players").innerHTML = players.map(p => {
+    const sim = p.simulated_distribution || {};
+    const outcomeClass = p.was_huge_game ? "hit" : "miss";
+    const outcome = p.was_huge_game ? "HIT" : "MISS";
+    return `<div class="player">
+      <div class="rank">#${p.rank}</div>
+      <div>
+        <div class="pname">${esc(p.player_name)} <span class="muted mono">${esc(p.position)} · ${esc(p.team)} vs ${esc(p.opponent_team)}</span></div>
+        <div class="meta mono">${esc(p.pathway)} · SnapScore ${fmt(p.predicted_value)} · actual ${fmt(p.actual_value)} · error ${fmt(p.absolute_error)}</div>
+        <div class="sim-band">
+          <div class="band-cell"><span>Sim p10</span><strong>${fmt(sim.p10)}</strong></div>
+          <div class="band-cell"><span>Median</span><strong>${fmt(sim.median)}</strong></div>
+          <div class="band-cell"><span>Sim p90</span><strong>${fmt(sim.p90)}</strong></div>
+          <div class="band-cell"><span>P over</span><strong>${sim.p_over_snapscore_projection == null ? "--" : fmtPct(sim.p_over_snapscore_projection)}</strong></div>
+        </div>
+      </div>
+      <div class="badge ${outcomeClass}">${outcome}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderProvenance(data) {
+  const m = data.manifest;
+  document.getElementById("provenance").innerHTML = `
+    <div class="sim-band">
+      <div class="band-cell"><span>Mode</span><strong>${esc(data.mode)}</strong></div>
+      <div class="band-cell"><span>Repo SHA</span><strong>${esc(m.repo_sha)}</strong></div>
+      <div class="band-cell"><span>Generated</span><strong>${esc(data.generated_at.slice(0,10))}</strong></div>
+      <div class="band-cell"><span>Endpoint</span><strong>/api</strong></div>
+    </div>
+    <p class="muted" style="margin:14px 0 0">${esc(m.data_cutoff)}</p>
+    <p class="muted" style="margin:10px 0 0">${esc(m.simulator_source)}</p>
+  `;
+}
+
+function renderGames(games) {
+  document.getElementById("games").innerHTML = games.map(g => {
+    const home = g.teams[g.home_team];
+    const away = g.teams[g.away_team];
+    return `<article class="game">
+      <div class="game-top">
+        <div><div class="teams">${esc(g.away_team)} @ ${esc(g.home_team)}</div><div class="meta">${esc(g.game_id)} · total ${g.market.total_line ?? "--"}</div></div>
+        <div class="wp">${esc(g.home_team)} ${fmtPct(g.win_probability_home)}</div>
+      </div>
+      ${teamRow(g.away_team, away)}
+      ${teamRow(g.home_team, home)}
+    </article>`;
+  }).join("");
+}
+
+function teamRow(team, stats) {
+  return `<div class="team-row">
+    <strong>${esc(team)}</strong>
+    <span><span class="muted">pts</span> ${fmt(stats.points.median)}</span>
+    <span><span class="muted">pass</span> ${fmt(stats.passing_yards.median)}</span>
+    <span><span class="muted">rush</span> ${fmt(stats.rushing_yards.median)}</span>
+  </div>`;
+}
+
+function renderSummaryTable(games) {
+  document.getElementById("summary-table").innerHTML = `<table>
+    <thead><tr><th>Game</th><th>Home win</th><th>Away pts</th><th>Home pts</th><th>Away pass</th><th>Home pass</th><th>Model source</th></tr></thead>
+    <tbody>${games.map(g => {
+      const home = g.teams[g.home_team];
+      const away = g.teams[g.away_team];
+      return `<tr><td>${esc(g.away_team)} @ ${esc(g.home_team)}</td><td class="num">${fmtPct(g.win_probability_home)}</td><td class="num">${fmt(away.points.median)}</td><td class="num">${fmt(home.points.median)}</td><td class="num">${fmt(away.passing_yards.median)}</td><td class="num">${fmt(home.passing_yards.median)}</td><td>${esc(away.coach_model.source)} / ${esc(home.coach_model.source)}</td></tr>`;
+    }).join("")}</tbody>
+  </table>`;
+}
+
+function renderEvidence(players) {
+  document.getElementById("evidence-table").innerHTML = `<table>
+    <thead><tr><th>Rank</th><th>Player</th><th>Game</th><th>Pathway</th><th>Prediction</th><th>Actual</th><th>Abs error</th><th>Outcome</th></tr></thead>
+    <tbody>${players.map(p => `<tr><td>#${p.rank}</td><td><strong>${esc(p.player_name)}</strong> <span class="muted">${esc(p.position)}</span></td><td>${esc(p.team)} vs ${esc(p.opponent_team)}</td><td>${esc(p.pathway)}</td><td class="num">${fmt(p.predicted_value)}</td><td class="num">${fmt(p.actual_value)}</td><td class="num">${fmt(p.absolute_error)}</td><td><span class="badge ${p.was_huge_game ? "hit" : "miss"}">${p.was_huge_game ? "Huge" : "Not huge"}</span></td></tr>`).join("")}</tbody>
+  </table>`;
+}
+
+function renderGlossary(glossary) {
+  document.getElementById("glossary").innerHTML = Object.entries(glossary).map(([term, copy]) => `<div class="term"><h3>${esc(term)}</h3><p>${esc(copy)}</p></div>`).join("");
+}
+
+document.getElementById("run-btn").addEventListener("click", fetchArtifact);
+document.getElementById("summary-toggle").addEventListener("click", () => {
+  const table = document.getElementById("summary-table");
+  table.classList.toggle("open");
+  document.getElementById("summary-toggle").textContent = table.classList.contains("open") ? "Hide summary table" : "Show summary table";
+});
+fetchArtifact();
+</script>
+</body>
+</html>
