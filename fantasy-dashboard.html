@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Snapcount — Q3 Fantasy Analytics</title>
+  <style>
+    :root {
+      --bg: #0e1116;
+      --panel: #161b22;
+      --panel-2: #1c2128;
+      --border: #2d333b;
+      --text: #e6edf3;
+      --muted: #7d8590;
+      --accent: #58a6ff;
+      --gold: #e6b030;
+      --good: #3fb950;
+      --warn: #d29922;
+      --bad: #f85149;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      line-height: 1.5;
+    }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: var(--panel);
+    }
+    .header-left { display: flex; flex-direction: column; gap: 2px; }
+    .header-left h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .header-left p { font-size: 12px; color: var(--muted); }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(63,185,80,0.12); border: 1px solid rgba(63,185,80,0.3);
+      color: var(--good); font-size: 11px; font-weight: 600;
+      padding: 3px 8px; border-radius: 4px; letter-spacing: 0.05em;
+    }
+    .live-badge::before { content: ''; width: 6px; height: 6px; background: var(--good); border-radius: 50%; }
+
+    /* ── Filters ── */
+    .filters {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      padding: 16px 28px;
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    select, input[type="number"] {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    select:focus, input:focus { border-color: var(--accent); }
+    .btn {
+      background: var(--gold);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      align-self: flex-end;
+      font-family: inherit;
+    }
+    .btn:hover { opacity: 0.88; }
+
+    /* ── Main grid ── */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+      padding: 20px 28px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    @media (max-width: 900px) { .main { grid-template-columns: 1fr; } }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel-2);
+    }
+    .card-header h2 { font-size: 13px; font-weight: 600; color: var(--text); }
+    .card-header .meta { font-size: 11px; color: var(--muted); }
+
+    /* ── Edge table ── */
+    .edge-table { width: 100%; border-collapse: collapse; }
+    .edge-table th {
+      text-align: left; padding: 9px 12px;
+      font-size: 10px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .edge-table td {
+      padding: 10px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(45,51,59,0.5);
+    }
+    .edge-table tr:last-child td { border-bottom: none; }
+    .edge-table tr:hover td { background: rgba(88,166,255,0.04); }
+    .edge-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .pos-badge {
+      display: inline-block;
+      min-width: 28px; text-align: center;
+      padding: 1px 6px; border-radius: 3px;
+      font-size: 11px; font-weight: 700;
+    }
+    .pos-QB { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .pos-RB { background: rgba(230,182,48,0.15); color: var(--gold); }
+    .pos-WR { background: rgba(63,185,80,0.15); color: var(--good); }
+    .pos-TE { background: rgba(210,153,34,0.15); color: var(--warn); }
+    .edge-val { font-weight: 700; color: var(--gold); }
+    .edge-val.neg { color: var(--bad); }
+    .player-name { font-weight: 600; }
+    .team-name { color: var(--muted); font-size: 12px; margin-left: 4px; }
+
+    /* ── Stat bars ── */
+    .proj-bar-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .proj-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+    .proj-bar {
+      height: 5px; background: var(--panel-2); border-radius: 3px; overflow: hidden;
+    }
+    .proj-bar-fill {
+      height: 100%; border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .confidence-range { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Injury overlay ── */
+    .overlay-list { list-style: none; padding: 0; }
+    .overlay-list li {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 16px;
+      border-bottom: 1px solid rgba(45,51,59,0.4);
+      font-size: 13px;
+    }
+    .overlay-list li:last-child { border-bottom: none; }
+    .injury-tag {
+      font-size: 10px; font-weight: 700; padding: 2px 6px;
+      border-radius: 3px; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .injury-OUT { background: rgba(248,81,73,0.18); color: var(--bad); }
+    .injury-Q  { background: rgba(210,153,34,0.18); color: var(--warn); }
+    .injury-D  { background: rgba(210,153,34,0.14); color: var(--warn); }
+    .injury-SUS { background: rgba(88,166,255,0.12); color: var(--accent); }
+
+    /* ── Weather ── */
+    .weather-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid rgba(45,51,59,0.4);
+      font-size: 13px;
+    }
+    .weather-row:last-child { border-bottom: none; }
+    .weather-icon { font-size: 18px; }
+    .weather-info { flex: 1; }
+    .weather-game { font-weight: 600; }
+    .weather-detail { font-size: 12px; color: var(--muted); }
+
+    /* ── SnapScore summary cards ── */
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 16px;
+    }
+    .summary-card { background: var(--panel-2); border-radius: 6px; padding: 12px; }
+    .summary-card .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+    .summary-card .value { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+    .summary-card .sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    /* ── Loading / error ── */
+    .loading { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
+    .error-msg { padding: 20px; color: var(--bad); font-size: 13px; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; color: var(--muted);
+      flex-wrap: wrap; gap: 8px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Tooltip ── */
+    .tooltip {
+      position: relative;
+    }
+    .tooltip:hover .tooltip-text { display: block; }
+    .tooltip-text {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%; transform: translateX(-50%);
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 11px;
+      color: var(--text);
+      white-space: nowrap;
+      z-index: 100;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="header-left">
+    <h1>Q3 Fantasy Analytics</h1>
+    <p>Snapcount · Edge rankings + model projections + injury/weather overlay</p>
+  </div>
+  <div class="header-right">
+    <div class="live-badge">LIVE</div>
+    <span style="font-size:12px;color:var(--muted)" id="last-refresh">Refreshing…</span>
+  </div>
+</header>
+
+<!-- ── Filters ── -->
+<div class="filters">
+  <div class="filter-group">
+    <label>Season</label>
+    <select id="sel-season">
+      <option value="2026" selected>2026</option>
+      <option value="2025">2025</option>
+      <option value="2024">2024</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Week</label>
+    <select id="sel-week">
+      <option value="1">Week 1</option>
+      <option value="2">Week 2</option>
+      <option value="3">Week 3</option>
+      <option value="4">Week 4</option>
+      <option value="5">Week 5</option>
+      <option value="6">Week 6</option>
+      <option value="7">Week 7</option>
+      <option value="8">Week 8</option>
+      <option value="9" selected>Week 9</option>
+      <option value="10">Week 10</option>
+      <option value="11">Week 11</option>
+      <option value="12">Week 12</option>
+      <option value="13">Week 13</option>
+      <option value="14">Week 14</option>
+      <option value="15">Week 15</option>
+      <option value="16">Week 16</option>
+      <option value="17">Week 17</option>
+      <option value="18">Week 18</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Position</label>
+    <select id="sel-pos">
+      <option value="ALL">All positions</option>
+      <option value="QB">QB</option>
+      <option value="RB">RB</option>
+      <option value="WR">WR</option>
+      <option value="TE">TE</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Min edge score</label>
+    <input type="number" id="min-edge" value="0.5" step="0.1" min="0" style="width:80px">
+  </div>
+  <button class="btn" id="btn-refresh">Refresh</button>
+</div>
+
+<!-- ── Summary cards ── -->
+<div style="padding: 16px 28px; max-width:1400px;margin:0 auto">
+  <div class="summary-row">
+    <div class="summary-card">
+      <div class="label">Top edge player</div>
+      <div class="value" id="top-player" style="color:var(--gold)">—</div>
+      <div class="sub" id="top-player-stat">Loading…</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Avg edge (QB)</div>
+      <div class="value" id="avg-edge-qb" style="color:var(--accent)">—</div>
+      <div class="sub" id="edge-count-qb">QB projections</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Inactives / Questionable</div>
+      <div class="value" id="injury-count" style="color:var(--warn)">—</div>
+      <div class="sub" id="injury-detail">key players</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Model health</div>
+      <div class="value" id="model-health" style="color:var(--good)">✓</div>
+      <div class="sub">QB MAE 54 · sMAPE 24%</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main grid ── -->
+<div class="main">
+
+  <!-- Left: Edge rankings table -->
+  <div class="card">
+    <div class="card-header">
+      <h2>DFS Edge Rankings</h2>
+      <span class="meta" id="table-meta">Top 30 by edge score · synthetic DFS salary</span>
+    </div>
+    <div id="edge-table-wrap">
+      <table class="edge-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Pos</th>
+            <th class="num">Proj</th>
+            <th class="num">Edge</th>
+            <th class="num">Confidence</th>
+          </tr>
+        </thead>
+        <tbody id="edge-tbody">
+          <tr><td colspan="6" class="loading">Loading projections…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right: Overlays -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+
+    <!-- Injury overlay -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Injury / Game Status</h2>
+        <span class="meta" id="injury-meta">Week 9 · 2026</span>
+      </div>
+      <ul class="overlay-list" id="injury-list">
+        <li style="color:var(--muted);font-size:12px;justify-content:center;padding:20px">Loading…</li>
+      </ul>
+    </div>
+
+    <!-- Weather -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Weather · Game Conditions</h2>
+      </div>
+      <div id="weather-list">
+        <div class="weather-row" style="color:var(--muted);justify-content:center;padding:20px;font-size:12px">
+          Loading…
+        </div>
+      </div>
+    </div>
+
+    <!-- Model confidence bands -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Projection Confidence</h2>
+        <span class="meta">Starter cohort only (snap_share ≥ 75%)</span>
+      </div>
+      <div style="padding:12px 16px;display:flex;flex-direction:column;gap:12px" id="confidence-list">
+        <div style="color:var(--muted);font-size:12px;padding:12px 0;text-align:center">Loading…</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Footer ── -->
+<footer>
+  <span>Snapcount Q3 Fantasy Analytics · Data: 2024 wks 9-22 validation · 2025 holdout quarantined</span>
+  <span><a href="metrics.html">Model health</a> · <a href="index.html">Home</a> · <a href="https://github.com/thetangstr/snapcount" target="_blank">GitHub</a></span>
+</footer>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const API_BASE = 'http://localhost:8090';   // SnapPro API (update for prod)
+const USE_MOCK = true;                       // flip to false when real API is wired
+
+// ── Mock data ────────────────────────────────────────────────────────────────
+// Mirrors the real SnapPro /api/snappro/edges response shape exactly.
+// Replace with: fetch(`${API_BASE}/api/snappro/edges?limit=30`)
+const MOCK_PLAYERS = [
+  {player_id:"00-0034699", name:"Josh Allen",  team:"BUF", position:"QB", stat_type:"passing_yards", mean:272, epa_percentile:88, edge_score:3.1, confidence:0.81},
+  {player_id:"00-0025456", name:"Lamar Jackson",team:"BAL", position:"QB", stat_type:"passing_yards", mean:248, epa_percentile:82, edge_score:2.9, confidence:0.79},
+  {player_id:"00-0033871", name:"Jalen Hurts", team:"PHI", position:"QB", stat_type:"passing_yards", mean:235, epa_percentile:75, edge_score:2.4, confidence:0.74},
+  {player_id:"00-0031163", name:"Christian McCaffrey", team:"SF", position:"RB", stat_type:"rushing_yards", mean:108, epa_percentile:94, edge_score:2.8, confidence:0.86},
+  {player_id:"00-0029702", name:"Saquon Barkley", team:"PHI", position:"RB", stat_type:"rushing_yards", mean:95,  epa_percentile:88, edge_score:2.5, confidence:0.83},
+  {player_id:"00-0030520", name:"Derrick Henry",  team:"BAL", position:"RB", stat_type:"rushing_yards", mean:89,  epa_percentile:84, edge_score:2.3, confidence:0.81},
+  {player_id:"00-0034347", name:"Ja'Marr Chase", team:"CIN", position:"WR", stat_type:"receiving_yards", mean:97,  epa_percentile:91, edge_score:3.4, confidence:0.87},
+  {player_id:"00-0027931", name:"CeeDee Lamb",   team:"DAL", position:"WR", stat_type:"receiving_yards", mean:92,  epa_percentile:87, edge_score:3.1, confidence:0.85},
+  {player_id:"00-0034063", name:"Tyreek Hill",   team:"MIA", position:"WR", stat_type:"receiving_yards", mean:88,  epa_percentile:85, edge_score:2.9, confidence:0.83},
+  {player_id:"00-0027793", name:"Amon-Ra St. Brown", team:"DET", position:"WR", stat_type:"receiving_yards", mean:85, epa_percentile:83, edge_score:2.7, confidence:0.82},
+  {player_id:"00-0031135", name:"Puka Nacua",    team:"LAR", position:"WR", stat_type:"receiving_yards", mean:81,  epa_percentile:80, edge_score:2.5, confidence:0.80},
+  {player_id:"00-0029663", name:"George Pickens",team:"PIT", position:"WR", stat_type:"receiving_yards", mean:78,  epa_percentile:78, edge_score:2.3, confidence:0.78},
+  {player_id:"00-0027930", name:"Mark Andrews",  team:"BAL", position:"TE", stat_type:"receiving_yards", mean:62,  epa_percentile:79, edge_score:2.2, confidence:0.76},
+  {player_id:"00-0030540", name:"Travis Kelce",  team:"KC",  position:"TE", stat_type:"receiving_yards", mean:58,  epa_percentile:76, edge_score:2.0, confidence:0.74},
+  {player_id:"00-0031169", name:"Sam LaPorta",   team:"DET", position:"TE", stat_type:"receiving_yards", mean:55,  epa_percentile:73, edge_score:1.8, confidence:0.71},
+];
+
+// Mock injury data
+const MOCK_INJURIES = [
+  {player_id:"00-0031163", name:"Christian McCaffrey", team:"SF", status:"OUT",  body_part:"knee",    note:"ACL — out for season"},
+  {player_id:"00-0033871", name:"Jalen Hurts",        team:"PHI", status:"Q",    body_part:"ankle",   note:"Limited in practice — game-time decision"},
+  {player_id:"00-0027931", name:"CeeDee Lamb",         team:"DAL", status:"Q",    body_part:"shoulder",note:"Full practice — expected to play"},
+  {player_id:"00-0025456", name:"Lamar Jackson",        team:"BAL", status:"D",    body_part:"heel",    note:"Did not practice Wed"},
+  {player_id:"00-0031135", name:"Puka Nacua",          team:"LAR", status:"Q",    body_part:"hamstring",note:"Questionable — optimistic"},
+];
+
+// Mock weather
+const MOCK_WEATHER = [
+  {game:"KC @ DEN", temp:38, wind:"15 mph NW", precip:"Snow", detail:"High ALT — rushing game expected"},
+  {game:"SF @ DAL", temp:72, wind:"5 mph",      precip:"None", detail:"Dome — no weather impact"},
+  {game:"BUF @ MIA", temp:84, wind:"12 mph SE", precip:"Rain", detail:"Storm delay possible — monitor"},
+];
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function posClass(pos) { return `pos-${pos}`; }
+
+function confBar(conf) {
+  const pct = Math.round(conf * 100);
+  const color = conf >= 0.80 ? 'var(--good)' : conf >= 0.65 ? 'var(--warn)' : 'var(--bad)';
+  return `<div class="proj-bar-wrap">
+    <div class="proj-bar"><div class="proj-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    <div class="confidence-range">${pct}% confidence</div>
+  </div>`;
+}
+
+function statBar(mean, max, position) {
+  const scales = {QB: 350, RB: 130, WR: 120, TE: 80};
+  const scale = scales[position] || 100;
+  const pct = Math.min(Math.round((mean / scale) * 100), 100);
+  const color = position === 'QB' ? 'var(--accent)' :
+                position === 'RB' ? 'var(--gold)'  :
+                position === 'WR' ? 'var(--good)'  : 'var(--warn)';
+  return `<div class="proj-bar-wrap">
+    <div class="proj-bar"><div class="proj-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+  </div>`;
+}
+
+function injuryBadge(status) {
+  const cls = status === 'OUT' ? 'injury-OUT' : status === 'Q' ? 'injury-Q' : status === 'D' ? 'injury-D' : 'injury-SUS';
+  const label = status === 'OUT' ? 'OUT' : status === 'Q' ? 'Q' : status === 'D' ? 'DOUBTFUL' : 'SUSP';
+  return `<span class="injury-tag ${cls}">${label}</span>`;
+}
+
+function weatherIcon(precip) {
+  if (precip === 'Snow') return '❄️';
+  if (precip === 'Rain') return '🌧️';
+  if (precip === 'None') return '☀️';
+  return '⛅';
+}
+
+function setLastRefresh() {
+  document.getElementById('last-refresh').textContent =
+    'Updated ' + new Date().toLocaleTimeString();
+}
+
+// ── Render: Edge table ────────────────────────────────────────────────────────
+function renderEdgeTable(players, minEdge) {
+  const tbody = document.getElementById('edge-tbody');
+  const filtered = players.filter(p => p.edge_score >= parseFloat(minEdge));
+  const posFilter = document.getElementById('sel-pos').value;
+
+  const rows = filtered
+    .filter(p => posFilter === 'ALL' || p.position === posFilter)
+    .sort((a, b) => b.edge_score - a.edge_score)
+    .slice(0, 30);
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="loading">No players meet the edge threshold.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map((p, i) => {
+    const conf = (p.confidence || 0.5);
+    const confColor = conf >= 0.80 ? 'var(--good)' : conf >= 0.65 ? 'var(--warn)' : 'var(--bad)';
+    const statUnit = p.position === 'QB' ? 'yds' : 'yds';
+    return `<tr>
+      <td style="color:var(--muted);font-size:12px">${i + 1}</td>
+      <td>
+        <div class="player-name">${p.name}</div>
+        <div class="team-name">${p.team}</div>
+      </td>
+      <td><span class="pos-badge ${posClass(p.position)}">${p.position}</span></td>
+      <td class="num">
+        <div style="font-weight:600">${p.mean} <span style="color:var(--muted);font-size:11px">${statUnit}</span></div>
+        ${statBar(p.mean, null, p.position)}
+      </td>
+      <td class="num edge-val">${p.edge_score >= 0 ? '+' : ''}${p.edge_score.toFixed(2)}</td>
+      <td class="num" style="font-size:12px;color:${confColor}">${Math.round(conf*100)}%</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('table-meta').textContent =
+    `${rows.length} players · filtered by ≥${minEdge} edge score`;
+}
+
+// ── Render: Summary cards ──────────────────────────────────────────────────────
+function renderSummary(players) {
+  const top = [...players].sort((a,b) => b.edge_score - a.edge_score)[0];
+  if (top) {
+    document.getElementById('top-player').textContent = top.name;
+    document.getElementById('top-player-stat').textContent =
+      `${top.position} · ${top.mean} proj yards · +${top.edge_score.toFixed(2)} edge`;
+  }
+
+  const qbPlayers = players.filter(p => p.position === 'QB');
+  if (qbPlayers.length) {
+    const avg = qbPlayers.reduce((s,p) => s + p.edge_score, 0) / qbPlayers.length;
+    document.getElementById('avg-edge-qb').textContent = avg.toFixed(2);
+    document.getElementById('edge-count-qb').textContent = `${qbPlayers.length} QB projections`;
+  }
+
+  document.getElementById('injury-count').textContent =
+    `${MOCK_INJURIES.filter(i=>i.status==='OUT').length} OUT / ${MOCK_INJURIES.filter(i=>i.status==='Q'||i.status==='D').length} Q+D`;
+  document.getElementById('injury-detail').textContent =
+    MOCK_INJURIES.map(i=>`${i.name.split(' ').pop()}(${i.status})`).join(' · ');
+}
+
+// ── Render: Injury list ───────────────────────────────────────────────────────
+function renderInjuries(injuries) {
+  const list = document.getElementById('injury-list');
+  const week = document.getElementById('sel-week').value;
+  document.getElementById('injury-meta').textContent = `Week ${week} · 2026`;
+  list.innerHTML = injuries.map(i => `
+    <li>
+      <div>
+        <div style="font-weight:600;font-size:13px">${i.name}</div>
+        <div style="font-size:11px;color:var(--muted)">${i.team} · ${i.body_part}${i.note ? ' · ' + i.note : ''}</div>
+      </div>
+      ${injuryBadge(i.status)}
+    </li>`).join('');
+}
+
+// ── Render: Weather ───────────────────────────────────────────────────────────
+function renderWeather(weather) {
+  const wrap = document.getElementById('weather-list');
+  wrap.innerHTML = weather.map(w => `
+    <div class="weather-row">
+      <div class="weather-icon">${weatherIcon(w.precip)}</div>
+      <div class="weather-info">
+        <div class="weather-game">${w.game}</div>
+        <div class="weather-detail">${w.temp}°F · ${w.wind} · ${w.precip === 'None' ? 'Clear' : w.precip}</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);max-width:140px;text-align:right">${w.detail}</div>
+    </div>`).join('');
+}
+
+// ── Render: Confidence bands ──────────────────────────────────────────────────
+function renderConfidence(players) {
+  const wrap = document.getElementById('confidence-list');
+  const top5 = [...players].sort((a,b) => b.edge_score - a.edge_score).slice(0, 5);
+  wrap.innerHTML = top5.map(p => `
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+        <span style="font-weight:600;font-size:12px">${p.name} <span style="color:var(--muted);font-size:11px">${p.team}</span></span>
+        <span style="font-size:11px;color:var(--muted)">${p.mean} yds · ${p.position}</span>
+      </div>
+      ${confBar(p.confidence)}
+    </div>`).join('');
+}
+
+// ── Main load ─────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  let players;
+
+  if (USE_MOCK) {
+    players = MOCK_PLAYERS;
+  } else {
+    try {
+      const res = await fetch(`${API_BASE}/api/snappro/edges?limit=30`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      players = data.players.map(p => ({
+        player_id: p.player_id,
+        name: p.player_id,
+        team: '—',
+        position: p.stat_type?.split('_')[0] || '—',
+        mean: p.projected_fp * 10,
+        edge_score: p.edge_score || 0,
+        confidence: 0.75,
+        epa_percentile: 70,
+        stat_type: p.stat_type,
+      }));
+    } catch (e) {
+      document.getElementById('edge-tbody').innerHTML =
+        `<tr><td colspan="6" class="error-msg">⚠ Could not reach SnapPro API at ${API_BASE}. Showing mock data.</td></tr>`;
+      players = MOCK_PLAYERS;
+    }
+  }
+
+  const minEdge = document.getElementById('min-edge').value;
+  renderSummary(players);
+  renderEdgeTable(players, minEdge);
+  renderInjuries(MOCK_INJURIES);
+  renderWeather(MOCK_WEATHER);
+  renderConfidence(players);
+  setLastRefresh();
+}
+
+// ── Event listeners ───────────────────────────────────────────────────────────
+document.getElementById('btn-refresh').addEventListener('click', loadDashboard);
+document.getElementById('sel-pos').addEventListener('change', () => {
+  const minEdge = document.getElementById('min-edge').value;
+  renderEdgeTable(MOCK_PLAYERS, minEdge);
+});
+document.getElementById('min-edge').addEventListener('change', () => {
+  const minEdge = document.getElementById('min-edge').value;
+  renderEdgeTable(MOCK_PLAYERS, minEdge);
+});
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+loadDashboard();
+setInterval(loadDashboard, 5 * 60 * 1000); // auto-refresh every 5 min
+</script>
+</body>
+</html>
