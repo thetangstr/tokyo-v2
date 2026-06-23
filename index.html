@@ -1063,8 +1063,8 @@ footer p{font-size:.72rem;color:var(--muted)}
       <div class="hs-mid">What MAE means</div>
     </div>
     <div class="holdout-body">
-      <h3 style="font-size:1.15rem">"MAE" = mean absolute error. On QB passing yards, MAE 51 means the model is off by about 51 yards per game on average.</h3>
-      <p>For context: an actual QB's passing-yards game-to-game variance (their own week-to-week swing) is in the 70-90 yards range. Our model's error (51) is now <strong>well below natural noise</strong> — meaning it can reliably rank QBs by likely production, even if individual game predictions still carry a one-touchdown-drive of error. The PRD ship-gate is ~25 MAE. We're roughly <strong>halfway there</strong> with M4.</p>
+      <h3 style="font-size:1.15rem">"MAE" = mean absolute error. On QB passing yards, the model is off by about 54 yards per game on the starter cohort (snap_share &ge; 75%).</h3>
+      <p>The 54 MAE is on starters only — QBs averaging 3+ quarters of snaps. On the unfiltered cohort (including mop-up duty rows) the number looks better (51) because predicting near-zero for non-starters is trivial. The honest number is 54. The path to the ~25 MAE ship-gate is new live signal — Vegas lines, in-week injury reports, coaching tendencies — not better algorithms. M5 ensembles tied M4 (0.01 yard difference); the model has extracted what the current inputs can offer.</p>
     </div>
   </div>
 
