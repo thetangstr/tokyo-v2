@@ -1070,26 +1070,26 @@ footer p{font-size:.72rem;color:var(--muted)}
 
   <div class="proof-wrap">
     <div class="proof-head">
-      <div class="ph-title">M1 Ridge → M4 XGBoost · The journey so far</div>
-      <div class="ph-sub">14 walk-forward folds · 2024 wks 9-22 · holdout 2025 quarantined · codex-audited</div>
+      <div class="ph-title">M1 Ridge → M4 XGBoost · Unfiltered + snap-filtered cohorts</div>
+      <div class="ph-sub">14 walk-forward folds · 2024 wks 9-22 · starter cohort (QB ≥ 0.75, RB ≥ 0.30, WR/TE ≥ 0.40) · holdout 2025 quarantined · codex-audited</div>
     </div>
     <table class="proof-table">
       <thead>
-        <tr><th>Position × Target</th><th style="text-align:right">n</th><th style="text-align:right">M1 Ridge<br>(lagged only)</th><th style="text-align:right">M3 XGB<br>(+EPA/NGS/opp)</th><th style="text-align:right"><strong>M4 XGB</strong><br>(+player attrs)</th><th style="text-align:right">M1→M4 Δ</th></tr>
+        <tr><th>Position × Target</th><th style="text-align:right">n (starter)</th><th style="text-align:right">M1 Ridge<br>(lagged only)</th><th style="text-align:right">M4 XGB unfiltered<br>(all rows)</th><th style="text-align:right"><strong>M4 XGB filtered</strong><br>(starters only)</th><th style="text-align:right">Filtered sMAPE</th></tr>
       </thead>
       <tbody>
-        <tr><td class="pos">QB × passing_yards</td><td class="num">395</td><td class="num">67.05</td><td class="num">51.75</td><td class="num"><strong>51.35</strong></td><td class="winner">−23.4%</td></tr>
-        <tr><td class="pos">QB × passing_tds</td><td class="num">395</td><td class="num">0.86</td><td class="num">0.78</td><td class="num"><strong>0.78</strong></td><td class="winner">−9.3%</td></tr>
-        <tr><td class="pos">RB × rushing_yards</td><td class="num">906</td><td class="num">19.79</td><td class="num">15.03</td><td class="num"><strong>14.99</strong></td><td class="winner">−24.3%</td></tr>
-        <tr><td class="pos">RB × rushing_tds</td><td class="num">906</td><td class="num">0.34</td><td class="num">0.31</td><td class="num"><strong>0.31</strong></td><td class="winner">−9.7%</td></tr>
-        <tr><td class="pos">WR × receiving_yards</td><td class="num">1,457</td><td class="num">20.92</td><td class="num">17.13</td><td class="num"><strong>17.10</strong></td><td class="winner">−18.3%</td></tr>
-        <tr><td class="pos">WR × receiving_tds</td><td class="num">1,457</td><td class="num">0.32</td><td class="num">0.31</td><td class="num"><strong>0.31</strong></td><td class="winner">−5.0%</td></tr>
-        <tr><td class="pos">TE × receiving_yards</td><td class="num">734</td><td class="num">15.39</td><td class="num">12.39</td><td class="num"><strong>12.49</strong></td><td class="winner">−18.8%</td></tr>
-        <tr><td class="pos">TE × receiving_tds</td><td class="num">734</td><td class="num">0.27</td><td class="num">0.26</td><td class="num"><strong>0.25</strong></td><td class="winner">−6.7%</td></tr>
+        <tr><td class="pos">QB × passing_yards</td><td class="num">309</td><td class="num">67.05</td><td class="num">51.35</td><td class="num"><strong>54.11</strong></td><td class="winner">23.5%</td></tr>
+        <tr><td class="pos">QB × passing_tds</td><td class="num">309</td><td class="num">0.86</td><td class="num">0.78</td><td class="num"><strong>0.91</strong></td><td class="winner">73%</td></tr>
+        <tr><td class="pos">RB × rushing_yards</td><td class="num">468</td><td class="num">19.79</td><td class="num">14.99</td><td class="num"><strong>20.59</strong></td><td class="winner">45%</td></tr>
+        <tr><td class="pos">RB × rushing_tds</td><td class="num">468</td><td class="num">0.34</td><td class="num">0.31</td><td class="num"><strong>0.49</strong></td><td class="winner">161%</td></tr>
+        <tr><td class="pos">WR × receiving_yards</td><td class="num">946</td><td class="num">20.92</td><td class="num">17.10</td><td class="num"><strong>22.43</strong></td><td class="winner">59%</td></tr>
+        <tr><td class="pos">WR × receiving_tds</td><td class="num">946</td><td class="num">0.32</td><td class="num">0.31</td><td class="num"><strong>0.42</strong></td><td class="winner">176%</td></tr>
+        <tr><td class="pos">TE × receiving_yards</td><td class="num">479</td><td class="num">15.39</td><td class="num">12.49</td><td class="num"><strong>15.24</strong></td><td class="winner">68%</td></tr>
+        <tr><td class="pos">TE × receiving_tds</td><td class="num">479</td><td class="num">0.27</td><td class="num">0.25</td><td class="num"><strong>0.32</strong></td><td class="winner">184%</td></tr>
       </tbody>
     </table>
     <div class="proof-foot">
-      MAE in target units (yards or TDs). XGB target-aware loss: <strong>reg:squarederror</strong> for yards, <strong>count:poisson</strong> for TDs (predicts non-negative rates; never goes below 0). Nine codex audit rounds independently verified: leakage gate runs before fit, models are fit fresh per fold, no future-week leak, no same-season aggregate leak. <strong>81/81 tests passing.</strong>
+      MAE in target units (yards or TDs). XGB target-aware loss: <strong>reg:squarederror</strong> for yards, <strong>count:poisson</strong> for TDs. <strong>Filtered column</strong> = M4 XGB on the snap-share starter cohort (QB ≥ 0.75, RB ≥ 0.30, WR/TE ≥ 0.40). MAE goes up vs unfiltered because the cohort is harder; sMAPE collapses because we removed the easy zeros. The honest headline: QB passing yards 54 MAE / 24% sMAPE on starters. TD sMAPE is an artifact of the metric (predicting 0.4 when truth is 0 gives 200% sMAPE); see M6.1/M6.2 for TD calibration. Nine codex audit rounds verified: leakage gate, fresh fits per fold, no future-week leak. <strong>81/81 tests passing.</strong>
     </div>
   </div>
 </section>
