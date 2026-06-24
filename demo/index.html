@@ -58,6 +58,18 @@ h1{font-family:Sora,sans-serif;font-size:clamp(42px,5.4vw,68px);line-height:.98;
 .run-note{font:500 12px JetBrains Mono,monospace;color:#9aa7b5;margin-top:10px;word-break:break-word}
 .terminal{background:#0b1118;border:1px solid #263241;border-radius:5px;padding:13px;font:12px/1.7 JetBrains Mono,monospace;color:#b9c6d3;min-height:150px}
 .terminal b{color:#fff}.terminal .ok{color:#9be7c1}.terminal .gold{color:#f6cd69}
+.run-story{display:grid;gap:9px}
+.story-step{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;padding:10px;border:1px solid var(--line);border-radius:6px;background:#fffaf2}
+.step-num{width:24px;height:24px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--muted);font:800 11px JetBrains Mono,monospace}
+.story-step.active{border-color:rgba(168,115,0,.55);box-shadow:0 0 0 3px rgba(168,115,0,.08)}
+.story-step.active .step-num{background:var(--gold);color:#fff}
+.story-step.done .step-num{background:var(--green);color:#fff}
+.story-label{font-weight:800}.story-detail{font-size:12px;color:var(--muted);margin-top:2px}
+.placeholder{padding:18px;border:1px dashed var(--line);border-radius:7px;background:rgba(255,253,248,.62);color:var(--muted);font-size:14px}
+.known-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.known-card{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:14px}
+.known-card h3{font-family:Sora,sans-serif;font-size:15px;margin:0 0 6px}.known-card p{margin:0;color:var(--muted);font-size:13px}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:10px 0 56px}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:18px;box-shadow:0 12px 30px rgba(45,36,23,.06)}
 .kpi .label{font:800 10px JetBrains Mono,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
@@ -78,9 +90,11 @@ section{padding:46px 0}
 .badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 8px;font:800 11px JetBrains Mono,monospace;border:1px solid var(--line)}
 .hit{color:var(--green);background:rgba(15,138,95,.08)}.miss{color:var(--red);background:rgba(180,64,54,.08)}
 .sim-band{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.condition-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 .band-cell{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:8px}
 .band-cell span{display:block;font:800 9px JetBrains Mono,monospace;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .band-cell strong{font-family:Sora,sans-serif;font-size:17px}
+.condition-grid .band-cell strong{font-size:14px}
 .games{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .game{border:1px solid var(--line);border-radius:7px;background:#fffaf2;padding:14px}
 .game-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}
@@ -102,7 +116,7 @@ tr:last-child td{border-bottom:0}.num{text-align:right;font-family:JetBrains Mon
 @media(max-width:980px){
   .links a:not(.deck):not(.current){display:none}
   .hero,.grid-main{grid-template-columns:1fr}
-  .kpis,.glossary{grid-template-columns:repeat(2,1fr)}
+  .kpis,.glossary,.known-grid{grid-template-columns:repeat(2,1fr)}
   .games{grid-template-columns:1fr}
 }
 @media(max-width:620px){
@@ -110,7 +124,7 @@ tr:last-child td{border-bottom:0}.num{text-align:right;font-family:JetBrains Mon
   .run-grid,.kpis,.glossary{grid-template-columns:1fr}
   .player{grid-template-columns:28px 1fr}
   .player>.badge{grid-column:2}
-  .sim-band{grid-template-columns:repeat(2,1fr)}
+  .sim-band,.condition-grid{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -169,13 +183,28 @@ tr:last-child td{border-bottom:0}.num{text-align:right;font-family:JetBrains Mon
   <section class="wrap">
     <div class="section-head">
       <div>
+        <h2>What Snapcount knew before kickoff</h2>
+        <p>The run freezes the prediction surface before Week 5: current-season form through W1-W4, prior-season play-calling, pregame market context, and target-week player-game mapping.</p>
+      </div>
+    </div>
+    <div class="known-grid" id="known-before"></div>
+  </section>
+
+  <section class="wrap">
+    <div class="section-head">
+      <div>
         <h2>Ball-out board tied to the simulated slate</h2>
         <p>Each candidate links the SnapScore projection to the Week 5 game simulation for that matchup. Actuals are displayed as post-game validation, not as model inputs.</p>
       </div>
     </div>
     <div class="grid-main">
       <div class="panel"><div class="panel-pad"><div class="panel-title">Top candidates</div><div class="players" id="players"></div></div></div>
-      <div class="panel"><div class="panel-pad"><div class="panel-title">Provenance</div><div id="provenance"></div></div></div>
+      <div class="panel"><div class="panel-pad">
+        <div class="panel-title">Execution trace</div>
+        <div class="run-story" id="run-story"></div>
+        <div class="panel-title" style="margin-top:18px">Provenance</div>
+        <div id="provenance"></div>
+      </div></div>
     </div>
   </section>
 
@@ -185,7 +214,7 @@ tr:last-child td{border-bottom:0}.num{text-align:right;font-family:JetBrains Mon
         <h2>Full Week 5 simulation slate</h2>
         <p>Generalized SnapSim fits play-calling models from pre-week PBP, blends team offense with opponent defensive outcome tables, and runs 300 Monte Carlo games per matchup.</p>
       </div>
-      <button class="btn small" id="summary-toggle">Show summary table</button>
+      <button class="btn small" id="summary-toggle" disabled>Show summary table</button>
     </div>
     <div class="games" id="games"></div>
     <div class="summary-table table-wrap" id="summary-table"></div>
@@ -217,26 +246,85 @@ let artifact = null;
 const fmtPct = value => `${Math.round(value * 100)}%`;
 const fmt = value => Number.isFinite(Number(value)) ? Number(value).toFixed(1) : "--";
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+const pendingStory = [
+  { label: "Load Week 5 slate", detail: "Waiting to read scheduled matchups and market context." },
+  { label: "Freeze preconditions", detail: "Waiting to lock player form and usage before Week 5 kickoff." },
+  { label: "Fit play-calling profiles", detail: "Waiting to fit team/coach run-pass tendencies." },
+  { label: "Run full-slate Monte Carlo", detail: "Waiting to simulate every Week 5 matchup." },
+  { label: "Attach SnapScore candidates", detail: "Waiting to connect player upside to game simulations." },
+  { label: "Validate after the game", detail: "Waiting to reveal actuals and MAE evidence." },
+];
 
 async function fetchArtifact() {
   const status = document.getElementById("api-status");
   const terminal = document.getElementById("terminal");
+  const runButton = document.getElementById("run-btn");
+  runButton.disabled = true;
+  runButton.textContent = "Running simulation...";
   status.textContent = "running";
   terminal.innerHTML = `<b>$ curl /api/week5-simulation</b><br><span class="gold">request sent...</span>`;
+  renderRunStory(pendingStory, 0);
+  let servedAt = "";
+  let endpoint = "/api/week5-simulation";
+  let finalStatus = "complete";
   try {
     const response = await fetch("/api/week5-simulation", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const payload = await response.json();
     artifact = payload.artifact || payload;
-    status.textContent = "complete";
-    terminal.innerHTML = `<b>$ curl /api/week5-simulation</b><br><span class="ok">200 OK</span><br>endpoint: ${esc(payload.endpoint || "/api/week5-simulation")}<br>served_at: ${esc(payload.served_at || artifact.generated_at)}<br>run_id: <span class="gold">${esc(artifact.run_id)}</span>`;
+    endpoint = payload.endpoint || endpoint;
+    servedAt = payload.served_at || artifact.generated_at;
   } catch (err) {
     const response = await fetch("./week5_simulation.json", { cache: "no-store" });
     artifact = await response.json();
-    status.textContent = "fallback";
-    terminal.innerHTML = `<b>$ curl /api/week5-simulation</b><br><span class="gold">local artifact fallback</span><br>run_id: <span class="gold">${esc(artifact.run_id)}</span><br>${esc(err.message)}`;
+    endpoint = "local artifact fallback";
+    servedAt = artifact.generated_at;
+    finalStatus = "fallback";
+    terminal.innerHTML = `<b>$ curl /api/week5-simulation</b><br><span class="gold">local fallback loaded</span><br>${esc(err.message)}<br>run_id: <span class="gold">${esc(artifact.run_id)}</span>`;
   }
+  await animateRun(artifact, { endpoint, servedAt });
+  status.textContent = finalStatus;
+  runButton.disabled = false;
+  runButton.textContent = "Re-run Week 5 simulation";
   render(artifact);
+}
+
+async function animateRun(data, meta) {
+  const terminal = document.getElementById("terminal");
+  const story = data.run_story || pendingStory;
+  for (let i = 0; i < story.length; i += 1) {
+    renderRunStory(story, i);
+    terminal.innerHTML = `<b>$ snapcount simulate --season 2025 --week 5</b><br><span class="gold">${esc(story[i].label)}</span><br>${esc(story[i].detail)}<br><span class="muted">step ${i + 1}/${story.length}</span>`;
+    await sleep(430);
+  }
+  renderRunStory(story, story.length);
+  terminal.innerHTML = `<b>$ curl /api/week5-simulation</b><br><span class="ok">200 OK</span><br>endpoint: ${esc(meta.endpoint)}<br>served_at: ${esc(meta.servedAt)}<br>run_id: <span class="gold">${esc(data.run_id)}</span>`;
+}
+
+function renderRunStory(story, activeIndex) {
+  document.getElementById("run-story").innerHTML = story.map((step, i) => {
+    const state = i < activeIndex ? "done" : i === activeIndex ? "active" : "";
+    return `<div class="story-step ${state}">
+      <div class="step-num">${i < activeIndex ? "✓" : i + 1}</div>
+      <div><div class="story-label">${esc(step.label)}</div><div class="story-detail">${esc(step.detail)}</div></div>
+    </div>`;
+  }).join("");
+}
+
+function renderPending() {
+  document.getElementById("run-id").textContent = "pending";
+  document.getElementById("run-slate").textContent = "waiting";
+  document.getElementById("run-sims").textContent = "waiting";
+  document.getElementById("known-before").innerHTML = `<div class="placeholder">Click “Run Week 5 simulation” to load pre-kickoff conditions.</div>`;
+  document.getElementById("players").innerHTML = `<div class="placeholder">The ball-out board will populate after the simulation run attaches SnapScore candidates.</div>`;
+  document.getElementById("provenance").innerHTML = `<div class="placeholder">Run provenance appears after the endpoint returns the artifact.</div>`;
+  document.getElementById("games").innerHTML = `<div class="placeholder">Full slate cards will render after Monte Carlo completes.</div>`;
+  document.getElementById("summary-table").innerHTML = "";
+  document.getElementById("evidence-table").innerHTML = `<div class="placeholder">Predicted-vs-actual validation stays hidden until the run finishes.</div>`;
+  document.getElementById("glossary").innerHTML = `<div class="placeholder">Metric definitions appear with the completed artifact.</div>`;
+  renderRunStory(pendingStory, -1);
 }
 
 function render(data) {
@@ -247,6 +335,8 @@ function render(data) {
   document.getElementById("kpi-top25").textContent = fmtPct(data.metrics.top_25_hit_rate);
   document.getElementById("kpi-mae").textContent = fmt(data.metrics.top_25_snapscore_mae);
   document.getElementById("kpi-coverage").textContent = `${data.manifest.n_games}×${data.manifest.n_simulations_per_game}`;
+  document.getElementById("summary-toggle").disabled = false;
+  renderKnownBefore(data);
   renderPlayers(data.featured_players.slice(0, 10));
   renderProvenance(data);
   renderGames(data.games);
@@ -255,9 +345,21 @@ function render(data) {
   renderGlossary(data.glossary);
 }
 
+function renderKnownBefore(data) {
+  const first = data.featured_players[0]?.preconditions || {};
+  const m = data.manifest;
+  document.getElementById("known-before").innerHTML = `
+    <div class="known-card"><h3>Data window</h3><p>${esc(first.data_window || "2025 W1-W4")} player form, with prior seasons for play-calling and outcome tables.</p></div>
+    <div class="known-card"><h3>Player form</h3><p>Games played, target/carry/reception volume, last-game output, and player share before Week 5.</p></div>
+    <div class="known-card"><h3>Game context</h3><p>Opponent, venue schedule, spread, and total line from the pregame schedule table.</p></div>
+    <div class="known-card"><h3>Validation wall</h3><p>${esc(m.data_cutoff)}.</p></div>
+  `;
+}
+
 function renderPlayers(players) {
   document.getElementById("players").innerHTML = players.map(p => {
     const sim = p.simulated_distribution || {};
+    const pre = p.preconditions || {};
     const outcomeClass = p.was_huge_game ? "hit" : "miss";
     const outcome = p.was_huge_game ? "HIT" : "MISS";
     return `<div class="player">
@@ -270,6 +372,14 @@ function renderPlayers(players) {
           <div class="band-cell"><span>Median</span><strong>${fmt(sim.median)}</strong></div>
           <div class="band-cell"><span>Sim p90</span><strong>${fmt(sim.p90)}</strong></div>
           <div class="band-cell"><span>P over</span><strong>${sim.p_over_snapscore_projection == null ? "--" : fmtPct(sim.p_over_snapscore_projection)}</strong></div>
+        </div>
+        <div class="condition-grid">
+          <div class="band-cell"><span>${esc(pre.data_window || "W1-W4")}</span><strong>${pre.games_played ?? "--"} games</strong></div>
+          <div class="band-cell"><span>Target avg</span><strong>${fmt(pre.target_avg)}</strong></div>
+          <div class="band-cell"><span>Last game</span><strong>W${pre.last_game_week ?? "--"} · ${fmt(pre.last_game_value)}</strong></div>
+          <div class="band-cell"><span>Opps</span><strong>T${pre.targets_w1_w4 ?? 0} / C${pre.carries_w1_w4 ?? 0} / R${pre.receptions_w1_w4 ?? 0}</strong></div>
+          <div class="band-cell"><span>Usage share</span><strong>${fmtPct(pre.usage_share || 0)}</strong></div>
+          <div class="band-cell"><span>Market total</span><strong>${fmt(pre.market_total_line)}</strong></div>
         </div>
       </div>
       <div class="badge ${outcomeClass}">${outcome}</div>
@@ -343,7 +453,7 @@ document.getElementById("summary-toggle").addEventListener("click", () => {
   table.classList.toggle("open");
   document.getElementById("summary-toggle").textContent = table.classList.contains("open") ? "Hide summary table" : "Show summary table";
 });
-fetchArtifact();
+renderPending();
 </script>
 </body>
 </html>
